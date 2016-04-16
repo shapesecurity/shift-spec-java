@@ -39,11 +39,11 @@ function parseAttrOrder(f) {
   return attrOrder;
 }
 
-let types = new Map;
+let nodes = new Map;
 let enums = new Map;
 
 /*
-types: Map name => {
+nodes: Map name => {
   attributes: [{
     name,
     idlType,
@@ -63,7 +63,7 @@ enums: Map name => [string]
 
 
 function inherits(type, parent) {
-  types.get(type).parents.push(parent);
+  nodes.get(type).parents.push(parent);
 }
 
 function addNamedType(name, type) {
@@ -92,7 +92,7 @@ let valueTypes = new Map([['DOMString', Value('string')], ['boolean', Value('boo
 for (let type of Spec) {
   if (type.type === 'interface') {
     idlTypes.set(type.name, type);
-    types.set(type.name, {
+    nodes.set(type.name, {
       isLeaf: true,
       parents: []
     });
@@ -112,18 +112,18 @@ for (let type of Spec) {
   }
 }
 
-superTypes.forEach(t => {types.get(t).isLeaf = false;});
+superTypes.forEach(t => {nodes.get(t).isLeaf = false;});
 namedTypesIDL.forEach((v, k) => namedTypes.set(k, idlTypeToType(v)));
 
 
 function setAttrs(name) {
-  let type = types.get(name);
+  let type = nodes.get(name);
   if (type.attributes) return;
   let attrs = type.attributes = [];
 
   type.parents.forEach(p => {
     setAttrs(p);
-    attrs.push(...types.get(p).attributes.map(a => ({
+    attrs.push(...nodes.get(p).attributes.map(a => ({
       name: a.name,
       type: a.type,
       inherited: true
@@ -173,7 +173,7 @@ function Enum(t) {
 
 function idlTypeToType(t) {
   if (typeof t === 'string') {
-    if (types.has(t)) {
+    if (nodes.has(t)) {
       return Node(t);
     }
     if (valueTypes.has(t)) {
@@ -235,15 +235,15 @@ function idlTypeToType(t) {
 }
 
 
-for (let name of types.keys()) {
+for (let name of nodes.keys()) {
   setAttrs(name);
 }
 
-console.log(JSON.stringify(Array.from(types), null, '  '))
-console.log(JSON.stringify(Array.from(enums), null, '  '))
-console.log(JSON.stringify(Array.from(namedTypes), null, '  '))
+// console.log(JSON.stringify(Array.from(nodes), null, '  '))
+// console.log(JSON.stringify(Array.from(enums), null, '  '))
+// console.log(JSON.stringify(Array.from(namedTypes), null, '  '))
 
 
-module.exports.default = {types, enums, namedTypes};
+module.exports.default = {nodes, enums, namedTypes};
 
 
