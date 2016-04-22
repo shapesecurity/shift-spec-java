@@ -232,16 +232,10 @@ const extraMethods = new Map([
     @Override
     @NotNull
     public Precedence getPrecedence() {
-        return Precedence.PRIMARY;
+        return Precedence.ASSIGNMENT;
     }
 `],
 ]);
-
-
-
-
-
-
 
 
 
@@ -249,8 +243,6 @@ const forbiddenNames = ['super']
 function sanitize(str) {
   return forbiddenNames.indexOf(str) === -1 ? str : `_${str}`; // todo this is a bit dumb - what other names are reserved in Java?
 }
-
-
 
 function isJavaInterfaceType(name) {
   let type = nodes.get(name);
