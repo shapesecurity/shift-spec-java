@@ -29,12 +29,16 @@ exports.default = function (obj) { // todo destructuring parameter, pending node
     nodes.get(parent).children.push(child);
   }
 
+
+  let newNodes = [];
+
   namedTypes.forEach((type, name) => {
     if (type.kind === 'union') {
       if (nodes.has(name)) {
         throw `Node named ${name} already exists!`;
       }
       nodes.set(name, {children: [], parents: [], attributes: []});
+      newNodes.push(name);
       type.argument.forEach(t => {inherits(t.argument, name);});
       namedTypes.set(name, {kind: 'node', argument: name});
     }
@@ -59,6 +63,7 @@ exports.default = function (obj) { // todo destructuring parameter, pending node
         break;
       case 'union':
         let name = type.argument.map(t => t.argument).join('');
+        newNodes.push(name);
         nodes.set(name, {children: [], parents: [], attributes: []});
         type.argument.forEach(t => {
           if (t.kind === 'node' || t.kind === 'namedType') {
@@ -79,6 +84,64 @@ exports.default = function (obj) { // todo destructuring parameter, pending node
   nodes.forEach(n => {
     n.attributes.forEach((a, i) => {n.attributes[i].type = addUnions(a.type);});
   });
+
+
+  // Ensure that our artificial union types inherit, where possible.
+  // E.g., the new type T representing Union(A, B), where A < C and B < C,
+  // should have T < C.
+
+  function allAnscestors(name) {
+    let anscestors = new Set;
+    let todo = nodes.get(name).parents.slice(0);
+    while (todo.length > 0) {
+      let cur = todo.shift();
+      if (anscestors.has(cur)) continue;
+      anscestors.add(cur);
+      todo.push(...nodes.get(cur).parents);
+    }
+    return anscestors;
+  }
+
+  function isDescendent(child, parent) {
+    let childNode = nodes.get(child);
+    if (childNode.parents.indexOf(parent) !== -1) return true;
+    return childNode.parents.some(c => isDescendent(c, parent));
+  }
+
+  function minimizeBounds(bounds) {
+    bounds = Array.from(bounds);
+    let out = bounds.filter(b => bounds.every(p => !isDescendent(p, b)));
+    return out;
+  }
+
+  function unsortedArrayEquals(a, b) {
+    if (a.length !== b.length) return false;
+    let x = a.slice(0).sort();
+    let y = b.slice(0).sort();
+    return x.every((v, i) => y[i] === v);
+  }
+
+  function intersection(sets) {
+    if (sets.length === 0) return new Set;
+    return new Set(Array.from(sets[0]).filter(v => sets.every(s => s.has(v))));
+  }
+
+  let touched = true;
+  while (touched) {
+    touched = false;
+    newNodes.forEach(name => {
+      let node = nodes.get(name);
+      let parents = new Set(node.parents);
+      let childParents = Array.from(intersection(node.children.map(allAnscestors))).filter(a => a !== name);
+      parents.add(...childParents);
+      let minimizedParents = minimizeBounds(parents);
+      if (!unsortedArrayEquals(minimizedParents, node.parents)) {
+        touched = true;
+        node.parents = minimizedParents;
+      }
+    });
+  }
+
 
   return {nodes, enums};
 }

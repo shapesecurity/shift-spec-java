@@ -27,6 +27,11 @@ let nodes = spec.nodes;
 
 
 
+const forbiddenNames = ['super']
+function sanitize(str) {
+  return forbiddenNames.indexOf(str) === -1 ? str : `_${str}`; // todo this is a bit dumb - what other names are reserved in Java?
+}
+
 function isStatefulType(type) {
   switch (type.kind) {
     case 'value':
@@ -85,7 +90,7 @@ function nodeReducer(type, nodeName) {
   let node = nodes.get(type);
   let attrs = node.attributes.filter(a => isStatefulType(a.type));
   attrs.forEach(a => {direct(a.type);});
-  let params = nodeName + attrs.map(a => `, ${methodNameFor(a.type)}(reducer, ${nodeName}.${a.name})`).join('');
+  let params = nodeName + attrs.map(a => `, ${methodNameFor(a.type)}(reducer, ${nodeName}.${sanitize(a.name)})`).join('');
   return `reducer.reduce${type}(${params})`;
 }
 
@@ -104,7 +109,7 @@ function direct(type) {
       direct(type.argument);
       method = `
     @NotNull
-    public static <State> Maybe<State> ${methodName}(
+    public static <State> Maybe<${type.argument.kind === 'list' ? 'ImmutableList<State>' : 'State'}> ${methodName}(
       @NotNull Reducer<State> reducer,
       @NotNull ${toJavaType(type)} maybe) {
         return maybe.map(x -> ${methodNameFor(type.argument)}(reducer, x));
@@ -115,7 +120,7 @@ function direct(type) {
       direct(type.argument);
       method = `
     @NotNull
-    public static <State> List<State> ${methodName}(
+    public static <State> ImmutableList<${type.argument.kind === 'nullable' ? 'Maybe<State>' : 'State'}> ${methodName}(
       @NotNull Reducer<State> reducer,
       @NotNull ${toJavaType(type)} list) {
         return list.map(x -> ${methodNameFor(type.argument)}(reducer, x));

@@ -172,10 +172,6 @@ for (let n of Array.from(nodes.keys()).filter(isJavaInterfaceType)) {
     throw `Interface type ${n} extends some type`;
   }
 
-  if (n !== 'Node' && imp.length === 0) {
-    imp = ['Node'];
-  }
-
   let imps = imp.length > 0 ? ` extends ${imp.join(', ')}` : ''; // todo consider removing redundant `Node`s
   let body = `${header}
 public interface ${n}${imps} {}

@@ -25,6 +25,8 @@ spec = require('./unions-to-interfaces').default(spec);
 let nodes = spec.nodes;
 let enums = spec.enums;
 
+let cloneReturnTypes = require('./find-max-super').default(nodes);
+
 let keywords = ['super'];
 
 function name(type, def) {
@@ -301,12 +303,12 @@ for (let typeName of Array.from(nodes.keys()).sort()) {
     cloneContent += `
     @NotNull
     @Override
-    public ${typeName} reduce${typeName}(@NotNull ${typeName} node`
+    public ${cloneReturnTypes.get(typeName)} reduce${typeName}(@NotNull ${typeName} node`
   } else {
   cloneContent += `
     @NotNull
     @Override
-    public ${typeName} reduce${typeName}(
+    public ${cloneReturnTypes.get(typeName)} reduce${typeName}(
             @NotNull ${typeName} node,
 ${attrStrings.join(',\n')}`
   }
