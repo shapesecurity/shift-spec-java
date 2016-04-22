@@ -35,6 +35,216 @@ const enumImports = new Map([
 ]);
 
 
+const extraMethods = new Map([
+  ['Expression', `
+    @NotNull
+    public Precedence getPrecedence();
+`],
+  ['ArrayExpression', `
+    @Override
+    @NotNull
+    public Precedence getPrecedence() {
+        return Precedence.PRIMARY;
+    }
+`],
+  ['ArrowExpression', `
+    @Override
+    @NotNull
+    public Precedence getPrecedence() {
+        return Precedence.ASSIGNMENT;
+    }
+`],
+  ['AssignmentExpression', `
+    @Override
+    @NotNull
+    public Precedence getPrecedence() {
+        return Precedence.ASSIGNMENT;
+    }
+`],
+  ['BinaryExpression', `
+    @Override
+    @NotNull
+    public Precedence getPrecedence() {
+        return this.operator.getPrecedence();
+    }
+`],
+  ['CallExpression', `
+    @Override
+    @NotNull
+    public Precedence getPrecedence() {
+        return Precedence.CALL;
+    }
+`],
+  ['ClassExpression', `
+    @Override
+    @NotNull
+    public Precedence getPrecedence() {
+        return Precedence.PRIMARY;
+    }
+`],
+  ['CompoundAssignmentExpression', `
+    @Override
+    @NotNull
+    public Precedence getPrecedence() {
+        return Precedence.ASSIGNMENT;
+    }
+`],
+  ['ConditionalExpression', `
+    @Override
+    @NotNull
+    public Precedence getPrecedence() {
+        return Precedence.CONDITIONAL;
+    }
+`],
+  ['FunctionExpression', `
+    @Override
+    @NotNull
+    public Precedence getPrecedence() {
+        return Precedence.PRIMARY;
+    }
+`],
+  ['IdentifierExpression', `
+    @Override
+    @NotNull
+    public Precedence getPrecedence() {
+        return Precedence.PRIMARY;
+    }
+`],
+  ['LiteralBooleanExpression', `
+    @Override
+    @NotNull
+    public Precedence getPrecedence() {
+        return Precedence.PRIMARY;
+    }
+`],
+  ['LiteralInfinityExpression', `
+    @Override
+    @NotNull
+    public Precedence getPrecedence() {
+        return Precedence.PRIMARY;
+    }
+`],
+  ['LiteralNullExpression', `
+    @Override
+    @NotNull
+    public Precedence getPrecedence() {
+        return Precedence.PRIMARY;
+    }
+`],
+  ['LiteralNumericExpression', `
+    @Override
+    @NotNull
+    public Precedence getPrecedence() {
+        return Precedence.PRIMARY;
+    }
+`],
+  ['LiteralRegExpExpression', `
+    @Override
+    @NotNull
+    public Precedence getPrecedence() {
+        return Precedence.PRIMARY;
+    }
+`],
+  ['LiteralStringExpression', `
+    @Override
+    @NotNull
+    public Precedence getPrecedence() {
+        return Precedence.PRIMARY;
+    }
+`],
+  ['MemberExpression', `
+    @Override
+    @NotNull
+    public Precedence getPrecedence() {
+        if (this.object instanceof Super) {
+          return Precedence.MEMBER;
+        }
+        Precedence p = ((Expression) this.object).getPrecedence();
+        if (p == Precedence.CALL) {
+            return Precedence.CALL;
+        }
+        return Precedence.MEMBER;
+    }
+`],
+  ['NewExpression', `
+    @Override
+    @NotNull
+    public Precedence getPrecedence() {
+        return this.arguments.isEmpty() ? Precedence.NEW : Precedence.MEMBER;
+    }
+`],
+  ['NewTargetExpression', `
+    @Override
+    @NotNull
+    public Precedence getPrecedence() {
+        return Precedence.MEMBER;
+    }
+`],
+  ['ObjectExpression', `
+    @Override
+    @NotNull
+    public Precedence getPrecedence() {
+        return Precedence.PRIMARY;
+    }
+`],
+  ['TemplateExpression', `
+    @Override
+    @NotNull
+    public Precedence getPrecedence() {
+        return this.tag.map(tag -> {
+            Precedence tagPrecedence = tag.getPrecedence();
+            if (tagPrecedence == Precedence.CALL) {
+                return Precedence.CALL;
+            }
+            return Precedence.MEMBER;
+        }).orJust(Precedence.MEMBER);
+    }
+`],
+  ['ThisExpression', `
+    @Override
+    @NotNull
+    public Precedence getPrecedence() {
+        return Precedence.PRIMARY;
+    }
+`],
+  ['UnaryExpression', `
+    @Override
+    @NotNull
+    public Precedence getPrecedence() {
+        return Precedence.PREFIX;
+    }
+`],
+  ['UpdateExpression', `
+    @Override
+    @NotNull
+    public Precedence getPrecedence() {
+        return this.isPrefix ? Precedence.PREFIX : Precedence.POSTFIX;
+    }
+`],
+  ['YieldExpression', `
+    @Override
+    @NotNull
+    public Precedence getPrecedence() {
+        return Precedence.ASSIGNMENT;
+    }
+`],
+  ['YieldGeneratorExpression', `
+    @Override
+    @NotNull
+    public Precedence getPrecedence() {
+        return Precedence.PRIMARY;
+    }
+`],
+]);
+
+
+
+
+
+
+
+
+
 const forbiddenNames = ['super']
 function sanitize(str) {
   return forbiddenNames.indexOf(str) === -1 ? str : `_${str}`; // todo this is a bit dumb - what other names are reserved in Java?
@@ -124,13 +334,16 @@ for (let n of Array.from(nodes.keys()).filter(n => !isJavaInterfaceType(n))) {
     public ${n} (${attrs.map(a => `${a.type === 'boolean' ? '' : '@NotNull '}${a.type} ${a.name}`).join(', ')}) {${ctorBody}}
 `;
 
+  let extra = extraMethods.has(n) ? extraMethods.get(n) : '';
+
   let imports = `
 import org.jetbrains.annotations.NotNull;
 import com.shapesecurity.functional.data.HashCodeBuilder;
 ` + 
     (attrs.some(a => a.type.match('ImmutableList')) ? 'import com.shapesecurity.functional.data.ImmutableList;\n' : '') +
     (attrs.some(a => a.type.match('Maybe')) ? 'import com.shapesecurity.functional.data.Maybe;\n' : '') +
-    (attrs.filter(a => !a.inherited && enums.has(a.type)).map(a => `import ${enumImports.get(a.type)};\n`));
+    (attrs.filter(a => !a.inherited && enums.has(a.type)).map(a => `import ${enumImports.get(a.type)};\n`)) +
+    (extra.match('Precedence') ? 'import com.shapesecurity.shift.ast.operators.Precedence;\n' : '');
 
 
   let propEquals = a => a.type === 'boolean' || a.type === 'double' ? ` && this.${a.name} == ((${n}) object).${a.name}` : ` && this.${a.name}.equals(((${n}) object).${a.name})`;
@@ -149,12 +362,13 @@ import com.shapesecurity.functional.data.HashCodeBuilder;
     }
 `;
 
+
   let clazz = `${header}${imports}
 public ${node.children.length === 0 ? '' : 'abstract '}class ${n}${exs}${imps} {
 ${fields}
 ${ctor}
 ${equals}
-${hashCode}
+${hashCode}${extra}
 }
 `;
   fs.writeFile(outdir + n + '.java', clazz, 'utf8');
@@ -163,6 +377,13 @@ ${hashCode}
 // then, Java interfaces
 for (let n of Array.from(nodes.keys()).filter(isJavaInterfaceType)) {
   let node = nodes.get(n);
+
+  let extra = extraMethods.has(n) ? extraMethods.get(n) : '';
+
+  let imports = extra.match('Precedence') ? `
+import org.jetbrains.annotations.NotNull;
+import com.shapesecurity.shift.ast.operators.Precedence;
+` : '';
 
   let imp = node.parents.filter(isJavaInterfaceType);
   if (imp.length !== node.parents.length) {
@@ -173,9 +394,12 @@ for (let n of Array.from(nodes.keys()).filter(isJavaInterfaceType)) {
   }
 
   let imps = imp.length > 0 ? ` extends ${imp.join(', ')}` : ''; // todo consider removing redundant `Node`s
-  let body = `${header}
-public interface ${n}${imps} {}
-`
+
+
+  let body = `${header}${imports}
+public interface ${n}${imps} {${extra}}
+`;
+
   fs.writeFile(outdir + n + '.java', body, 'utf8');
 }
 
