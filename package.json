@@ -1,0 +1,15 @@
+{
+  "name": "shift-java-gen",
+  "version": "0.0.1",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "shift-spec-idl": "^2015.1.0",
+    "webidl2": "^2.0.11"
+  }
+}
