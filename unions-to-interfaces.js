@@ -85,7 +85,6 @@ exports.default = function (obj) { // todo destructuring parameter, pending node
     n.attributes.forEach((a, i) => {n.attributes[i].type = addUnions(a.type);});
   });
 
-
   // Ensure that our artificial union types inherit, where possible.
   // E.g., the new type T representing Union(A, B), where A < C and B < C,
   // should have T < C.
@@ -126,16 +125,21 @@ exports.default = function (obj) { // todo destructuring parameter, pending node
     return new Set(Array.from(sets[0]).filter(v => sets.every(s => s.has(v))));
   }
 
+  function subset(a, b) {
+    return a.every(x => b.indexOf(x) !== -1);
+  }
+
   let touched = true;
   while (touched) {
     touched = false;
     newNodes.forEach(name => {
       let node = nodes.get(name);
       let parents = new Set(node.parents);
-      let childParents = Array.from(intersection(node.children.map(allAnscestors))).filter(a => a !== name);
+      let childParents = Array.from(intersection(node.children.map(allAnscestors))).filter(a => a !== name && !subset(nodes.get(a).children, node.children));
       parents.add(...childParents);
       let minimizedParents = minimizeBounds(parents);
       if (!unsortedArrayEquals(minimizedParents, node.parents)) {
+        // todo strictly speaking also need to check that all attributes required by parents are present on this node, but whatever
         touched = true;
         node.parents = minimizedParents;
       }

@@ -17,7 +17,7 @@
 "use strict";
 
 let fs = require('fs');
-let specConsumer = require('../shift-spec-consumer').default;
+let specConsumer = require('../shift-spec-consumer');
 let spec = specConsumer(fs.readFileSync(require.resolve('../shift-spec/spec.idl'), 'utf8'), fs.readFileSync(require.resolve('../shift-spec/attribute-order.conf'), 'utf8'));
 spec = require('./unions-to-interfaces').default(spec);
 let nodes = spec.nodes;
