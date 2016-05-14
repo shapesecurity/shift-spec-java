@@ -16,12 +16,15 @@
 
 "use strict";
 
-const outdir = 'ast/';
+const outDir = 'out/';
+const astDir = 'ast/';
 
 let fs = require('fs');
+try { fs.mkdirSync(outDir); } catch (ignored) {}
+try { fs.mkdirSync(outDir + astDir); } catch (ignored) {}
 
-let specConsumer = require('../shift-spec-consumer');
-let spec = specConsumer(fs.readFileSync(require.resolve('../shift-spec/spec.idl'), 'utf8'), fs.readFileSync(require.resolve('../shift-spec/attribute-order.conf'), 'utf8'));
+let specConsumer = require('shift-spec-consumer');
+let spec = specConsumer(fs.readFileSync(require.resolve('shift-spec-idl/spec.idl'), 'utf8'), fs.readFileSync(require.resolve('shift-spec-idl/attribute-order.conf'), 'utf8'));
 spec = require('./unions-to-interfaces').default(spec);
 let nodes = spec.nodes;
 let enums = spec.enums;
@@ -363,7 +366,7 @@ ${equals}
 ${hashCode}${extra}
 }
 `;
-  fs.writeFile(outdir + n + '.java', clazz, 'utf8');
+  fs.writeFile(outDir + astDir + n + '.java', clazz, 'utf8');
 }
 
 // then, Java interfaces
@@ -392,7 +395,7 @@ import com.shapesecurity.shift.ast.operators.Precedence;
 public interface ${n}${imps} {${extra}}
 `;
 
-  fs.writeFile(outdir + n + '.java', body, 'utf8');
+  fs.writeFile(outDir + astDir + n + '.java', body, 'utf8');
 }
 
 

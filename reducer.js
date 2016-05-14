@@ -18,17 +18,19 @@
 
 let fs = require('fs');
 
+const outDir = 'out/';
 const reducerDir = 'reducer/';
 const serializerDir = 'serialization/';
 const rangeCheckerDir = 'parser/';
-try { fs.mkdirSync(reducerDir); } catch (ignored) {}
-try { fs.mkdirSync(serializerDir); } catch (ignored) {}
-try { fs.mkdirSync(rangeCheckerDir); } catch (ignored) {}
+try { fs.mkdirSync(outDir); } catch (ignored) {}
+try { fs.mkdirSync(outDir + reducerDir); } catch (ignored) {}
+try { fs.mkdirSync(outDir + serializerDir); } catch (ignored) {}
+try { fs.mkdirSync(outDir + rangeCheckerDir); } catch (ignored) {}
 
 
 
-let specConsumer = require('../shift-spec-consumer');
-let spec = specConsumer(fs.readFileSync(require.resolve('../shift-spec/spec.idl'), 'utf8'), fs.readFileSync(require.resolve('../shift-spec/attribute-order.conf'), 'utf8'));
+let specConsumer = require('shift-spec-consumer');
+let spec = specConsumer(fs.readFileSync(require.resolve('shift-spec-idl/spec.idl'), 'utf8'), fs.readFileSync(require.resolve('shift-spec-idl/attribute-order.conf'), 'utf8'));
 spec = require('./unions-to-interfaces').default(spec);
 let nodes = spec.nodes;
 let enums = spec.enums;
@@ -125,7 +127,7 @@ ${attrs.join(',\n')}`
 
 reducerContent += '}';
 
-fs.writeFileSync(reducerDir + 'Reducer.java', reducerContent, 'utf-8');
+fs.writeFileSync(outDir + reducerDir + 'Reducer.java', reducerContent, 'utf-8');
 
 
 
@@ -244,7 +246,7 @@ ${attrStrings.join(',\n')}`
 
 monoidalContent += '}';
 
-fs.writeFileSync(reducerDir + 'MonoidalReducer.java', monoidalContent, 'utf-8');
+fs.writeFileSync(outDir + reducerDir + 'MonoidalReducer.java', monoidalContent, 'utf-8');
 
 
 
@@ -328,7 +330,7 @@ ${attrStrings.join(',\n')}`
 
 cloneContent += '}';
 
-fs.writeFileSync(reducerDir + 'ReconstructingReducer.java', cloneContent, 'utf-8');
+fs.writeFileSync(outDir + reducerDir + 'ReconstructingReducer.java', cloneContent, 'utf-8');
 
 
 
@@ -541,7 +543,7 @@ for (let typeName of Array.from(nodes.keys()).sort()) {
 
 serializerContent += '}';
 
-fs.writeFileSync(serializerDir + 'Serializer.java', serializerContent, 'utf-8');
+fs.writeFileSync(outDir + serializerDir + 'Serializer.java', serializerContent, 'utf-8');
 
 
 
@@ -871,7 +873,7 @@ ${innerDeserializerContent}                }
     }
 }`;
 
-fs.writeFileSync(serializerDir + 'Deserializer.java', deserializerContent, 'utf-8');
+fs.writeFileSync(outDir + serializerDir + 'Deserializer.java', deserializerContent, 'utf-8');
 
 
 
@@ -938,7 +940,7 @@ for (let typeName of Array.from(nodes.keys()).sort()) {
 
 flatternerContent += '}\n';
 
-fs.writeFileSync(reducerDir + 'Flattener.java', flatternerContent, 'utf-8');
+fs.writeFileSync(outDir + reducerDir + 'Flattener.java', flatternerContent, 'utf-8');
 
 
 
@@ -1040,4 +1042,4 @@ for (let typeName of Array.from(nodes.keys()).sort()) {
 
 rangeCheckerContent += '}\n';
 
-fs.writeFileSync(rangeCheckerDir + 'RangeCheckerReducer.java', rangeCheckerContent, 'utf-8');
+fs.writeFileSync(outDir + rangeCheckerDir + 'RangeCheckerReducer.java', rangeCheckerContent, 'utf-8');

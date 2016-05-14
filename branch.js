@@ -17,8 +17,12 @@
 "use strict";
 
 let fs = require('fs');
-let specConsumer = require('../shift-spec-consumer');
-let spec = specConsumer(fs.readFileSync(require.resolve('../shift-spec/spec.idl'), 'utf8'), fs.readFileSync(require.resolve('../shift-spec/attribute-order.conf'), 'utf8'));
+
+const outDir = 'out/';
+try { fs.mkdirSync(outDir); } catch (ignored) {}
+
+let specConsumer = require('shift-spec-consumer');
+let spec = specConsumer(fs.readFileSync(require.resolve('shift-spec-idl/spec.idl'), 'utf8'), fs.readFileSync(require.resolve('shift-spec-idl/attribute-order.conf'), 'utf8'));
 spec = require('./unions-to-interfaces').default(spec);
 let nodes = spec.nodes;
 let enums = spec.enums;
@@ -167,5 +171,5 @@ abstract class IndexedBranch extends Branch {
 ${classes.join('\n')}
 `;
 
-fs.writeFileSync('Branch.java', branchContent, 'utf-8');
+fs.writeFileSync(outDir + 'Branch.java', branchContent, 'utf-8');
 

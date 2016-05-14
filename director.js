@@ -18,11 +18,12 @@
 
 let fs = require('fs');
 
-const outdir = 'reducer/';
-try { fs.mkdirSync(outdir); } catch (ignored) {}
+const outDir = 'out/';
+const reducerDir = 'reducer/';
+try { fs.mkdirSync(outDir + reducerDir); } catch (ignored) {}
 
-let specConsumer = require('../shift-spec-consumer');
-let spec = specConsumer(fs.readFileSync(require.resolve('../shift-spec/spec.idl'), 'utf8'), fs.readFileSync(require.resolve('../shift-spec/attribute-order.conf'), 'utf8'));
+let specConsumer = require('shift-spec-consumer');
+let spec = specConsumer(fs.readFileSync(require.resolve('shift-spec-idl/spec.idl'), 'utf8'), fs.readFileSync(require.resolve('shift-spec-idl/attribute-order.conf'), 'utf8'));
 spec = require('./unions-to-interfaces').default(spec);
 let nodes = spec.nodes;
 
@@ -215,4 +216,4 @@ content += Array.from(methods.keys()).sort().map(methodName => methods.get(metho
 
 content += '\n}\n';
 
-fs.writeFile(outdir + 'Director.java', content, 'utf8');
+fs.writeFile(outDir + reducerDir + 'Director.java', content, 'utf8');
