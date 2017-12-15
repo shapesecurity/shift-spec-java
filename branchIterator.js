@@ -25,7 +25,6 @@ let specConsumer = require('shift-spec-consumer');
 let spec = specConsumer(fs.readFileSync(require.resolve('shift-spec-idl/spec.idl'), 'utf8'), fs.readFileSync(require.resolve('shift-spec-idl/attribute-order.conf'), 'utf8'));
 spec = require('./unions-to-interfaces').default(spec);
 let nodes = spec.nodes;
-let enums = spec.enums;
 
 let keywords = ['super'];
 
@@ -181,7 +180,7 @@ for (let typeName of Array.from(nodes.keys()).sort()) {
 					--index;
 				}`;
     } else if (isList) {
-  		ifClause += `
+      ifClause += `
 				${createdIndex ? '' : 'int '}index = ${nodeName}.${sanitize(a.name)}.length - 1;`;
       createdIndex = true
       ifClause += `
