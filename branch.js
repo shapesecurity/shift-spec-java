@@ -84,6 +84,8 @@ import java.util.Objects;
 public abstract class Branch {
 	abstract public Maybe<? extends Node> step(Node node);
 
+	abstract public String propertyName();
+
 	@Override
 	public boolean equals(Object o) {
 		if (this == o) return true;
@@ -136,6 +138,10 @@ class ${name} extends `;
 		if (!(node instanceof ${typeName})) return Maybe.empty();
 		return ((${typeName}) node).${sanitize(a.name)}.index(index).orJust(Maybe.empty());
 	}
+
+	public String propertyName() {
+		return "${a.name}[" + Integer.toString(index) + "]";
+	}
 }`;
     } else if (isList) {
       cl += `IndexedBranch {
@@ -148,6 +154,10 @@ class ${name} extends `;
 		if (!(node instanceof ${typeName})) return Maybe.empty();
 		return ((${typeName}) node).${sanitize(a.name)}.index(index);
 	}
+
+	public String propertyName() {
+		return "${a.name}[" + Integer.toString(index) + "]";
+	}
 }`;
     } else if (isMaybe) {
       cl += `Branch {
@@ -156,6 +166,10 @@ class ${name} extends `;
 		if (!(node instanceof ${typeName})) return Maybe.empty();
 		return ((${typeName}) node).${sanitize(a.name)};
 	}
+
+	public String propertyName() {
+		return "${a.name}";
+	}
 }`;
     } else {
       cl += `Branch {
@@ -163,6 +177,10 @@ class ${name} extends `;
 	public Maybe<? extends Node> step(Node node) {
 		if (!(node instanceof ${typeName})) return Maybe.empty();
 		return Maybe.of(((${typeName}) node).${sanitize(a.name)});
+	}
+
+	public String propertyName() {
+		return "${a.name}";
 	}
 }`;
     }
