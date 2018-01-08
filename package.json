@@ -10,9 +10,10 @@
   },
   "main": "index.js",
   "scripts": {
-    "all": "npm run ast && npm run branch && npm run director && npm run reducer",
+    "all": "npm run ast && npm run branch && npm run branch-iterator && npm run director && npm run reducer",
     "ast": "node ast",
     "branch": "node branch",
+    "branch-iterator": "node branchIterator",
     "director": "node director",
     "reducer": "node reducer",
     "clean": "rm -rf out/",

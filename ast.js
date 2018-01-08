@@ -30,134 +30,134 @@ let nodes = spec.nodes;
 let enums = spec.enums;
 
 const enumImports = new Map([
-  ['CompoundAssignmentOperator', 'com.shapesecurity.shift.ast.operators.CompoundAssignmentOperator'],
-  ['BinaryOperator', 'com.shapesecurity.shift.ast.operators.BinaryOperator'],
-  ['UnaryOperator', 'com.shapesecurity.shift.ast.operators.UnaryOperator'],
-  ['UpdateOperator', 'com.shapesecurity.shift.ast.operators.UpdateOperator'],
-  ['VariableDeclarationKind', 'com.shapesecurity.shift.ast.VariableDeclarationKind']
+  ['CompoundAssignmentOperator', 'com.shapesecurity.shift.es2016.ast.operators.CompoundAssignmentOperator'],
+  ['BinaryOperator', 'com.shapesecurity.shift.es2016.ast.operators.BinaryOperator'],
+  ['UnaryOperator', 'com.shapesecurity.shift.es2016.ast.operators.UnaryOperator'],
+  ['UpdateOperator', 'com.shapesecurity.shift.es2016.ast.operators.UpdateOperator'],
+  ['VariableDeclarationKind', 'com.shapesecurity.shift.es2016.ast.VariableDeclarationKind']
 ]);
 
 
 const extraMethods = new Map([
   ['Expression', `
-    @NotNull
+    @Nonnull
     public Precedence getPrecedence();
 `],
   ['ArrayExpression', `
     @Override
-    @NotNull
+    @Nonnull
     public Precedence getPrecedence() {
         return Precedence.PRIMARY;
     }
 `],
   ['ArrowExpression', `
     @Override
-    @NotNull
+    @Nonnull
     public Precedence getPrecedence() {
         return Precedence.ASSIGNMENT;
     }
 `],
   ['AssignmentExpression', `
     @Override
-    @NotNull
+    @Nonnull
     public Precedence getPrecedence() {
         return Precedence.ASSIGNMENT;
     }
 `],
   ['BinaryExpression', `
     @Override
-    @NotNull
+    @Nonnull
     public Precedence getPrecedence() {
         return this.operator.getPrecedence();
     }
 `],
   ['CallExpression', `
     @Override
-    @NotNull
+    @Nonnull
     public Precedence getPrecedence() {
         return Precedence.CALL;
     }
 `],
   ['ClassExpression', `
     @Override
-    @NotNull
+    @Nonnull
     public Precedence getPrecedence() {
         return Precedence.PRIMARY;
     }
 `],
   ['CompoundAssignmentExpression', `
     @Override
-    @NotNull
+    @Nonnull
     public Precedence getPrecedence() {
         return Precedence.ASSIGNMENT;
     }
 `],
   ['ConditionalExpression', `
     @Override
-    @NotNull
+    @Nonnull
     public Precedence getPrecedence() {
         return Precedence.CONDITIONAL;
     }
 `],
   ['FunctionExpression', `
     @Override
-    @NotNull
+    @Nonnull
     public Precedence getPrecedence() {
         return Precedence.PRIMARY;
     }
 `],
   ['IdentifierExpression', `
     @Override
-    @NotNull
+    @Nonnull
     public Precedence getPrecedence() {
         return Precedence.PRIMARY;
     }
 `],
   ['LiteralBooleanExpression', `
     @Override
-    @NotNull
+    @Nonnull
     public Precedence getPrecedence() {
         return Precedence.PRIMARY;
     }
 `],
   ['LiteralInfinityExpression', `
     @Override
-    @NotNull
+    @Nonnull
     public Precedence getPrecedence() {
         return Precedence.PRIMARY;
     }
 `],
   ['LiteralNullExpression', `
     @Override
-    @NotNull
+    @Nonnull
     public Precedence getPrecedence() {
         return Precedence.PRIMARY;
     }
 `],
   ['LiteralNumericExpression', `
     @Override
-    @NotNull
+    @Nonnull
     public Precedence getPrecedence() {
         return Precedence.PRIMARY;
     }
 `],
   ['LiteralRegExpExpression', `
     @Override
-    @NotNull
+    @Nonnull
     public Precedence getPrecedence() {
         return Precedence.PRIMARY;
     }
 `],
   ['LiteralStringExpression', `
     @Override
-    @NotNull
+    @Nonnull
     public Precedence getPrecedence() {
         return Precedence.PRIMARY;
     }
 `],
   ['MemberExpression', `
     @Override
-    @NotNull
+    @Nonnull
     public Precedence getPrecedence() {
         if (this.object instanceof Super) {
           return Precedence.MEMBER;
@@ -171,28 +171,28 @@ const extraMethods = new Map([
 `],
   ['NewExpression', `
     @Override
-    @NotNull
+    @Nonnull
     public Precedence getPrecedence() {
         return this.arguments.isEmpty() ? Precedence.NEW : Precedence.MEMBER;
     }
 `],
   ['NewTargetExpression', `
     @Override
-    @NotNull
+    @Nonnull
     public Precedence getPrecedence() {
         return Precedence.MEMBER;
     }
 `],
   ['ObjectExpression', `
     @Override
-    @NotNull
+    @Nonnull
     public Precedence getPrecedence() {
         return Precedence.PRIMARY;
     }
 `],
   ['TemplateExpression', `
     @Override
-    @NotNull
+    @Nonnull
     public Precedence getPrecedence() {
         return this.tag.map(tag -> {
             Precedence tagPrecedence = tag.getPrecedence();
@@ -205,35 +205,35 @@ const extraMethods = new Map([
 `],
   ['ThisExpression', `
     @Override
-    @NotNull
+    @Nonnull
     public Precedence getPrecedence() {
         return Precedence.PRIMARY;
     }
 `],
   ['UnaryExpression', `
     @Override
-    @NotNull
+    @Nonnull
     public Precedence getPrecedence() {
         return Precedence.PREFIX;
     }
 `],
   ['UpdateExpression', `
     @Override
-    @NotNull
+    @Nonnull
     public Precedence getPrecedence() {
         return this.isPrefix ? Precedence.PREFIX : Precedence.POSTFIX;
     }
 `],
   ['YieldExpression', `
     @Override
-    @NotNull
+    @Nonnull
     public Precedence getPrecedence() {
         return Precedence.ASSIGNMENT;
     }
 `],
   ['YieldGeneratorExpression', `
     @Override
-    @NotNull
+    @Nonnull
     public Precedence getPrecedence() {
         return Precedence.ASSIGNMENT;
     }
@@ -297,7 +297,7 @@ const header = `// Generated by shift-java-gen/ast.js
  * limitations under the License.
  */
 
-package com.shapesecurity.shift.ast;
+package com.shapesecurity.shift.es2016.ast;
 `;
 
 // actually generate the files
@@ -316,7 +316,7 @@ for (let n of Array.from(nodes.keys()).filter(n => !isJavaInterfaceType(n))) {
   let attrs = node.attributes;
   attrs.forEach(a => {a.name = sanitize(a.name); a.type = toJavaType(a.type);});
 
-  let fields = attrs.filter(a => !a.inherited).map(a => `    @NotNull
+  let fields = attrs.filter(a => !a.inherited).map(a => `    @Nonnull
     public final ${a.type} ${a.name};
 `).join('\n');
 
@@ -326,19 +326,19 @@ for (let n of Array.from(nodes.keys()).filter(n => !isJavaInterfaceType(n))) {
   let ctorBody = ctorBodyLines.length > 0 ? `\n${ctorBodyLines.join('\n')}\n    ` : '';
 
   let ctor = `
-    public ${n} (${attrs.map(a => `${a.type === 'boolean' ? '' : '@NotNull '}${a.type} ${a.name}`).join(', ')}) {${ctorBody}}
+    public ${n} (${attrs.map(a => `${a.type === 'boolean' ? '' : '@Nonnull '}${a.type} ${a.name}`).join(', ')}) {${ctorBody}}
 `;
 
   let extra = extraMethods.has(n) ? extraMethods.get(n) : '';
 
   let imports = `
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
 import com.shapesecurity.functional.data.HashCodeBuilder;
 ` + 
     (attrs.some(a => a.type.match('ImmutableList')) ? 'import com.shapesecurity.functional.data.ImmutableList;\n' : '') +
     (attrs.some(a => a.type.match('Maybe')) ? 'import com.shapesecurity.functional.data.Maybe;\n' : '') +
     (attrs.filter(a => !a.inherited && enums.has(a.type)).map(a => `import ${enumImports.get(a.type)};\n`)) +
-    (extra.match('Precedence') ? 'import com.shapesecurity.shift.ast.operators.Precedence;\n' : '');
+    (extra.match('Precedence') ? 'import com.shapesecurity.shift.es2016.ast.operators.Precedence;\n' : '');
 
 
   let propEquals = a => a.type === 'boolean' || a.type === 'double' ? ` && this.${a.name} == ((${n}) object).${a.name}` : ` && this.${a.name}.equals(((${n}) object).${a.name})`;
@@ -376,8 +376,8 @@ for (let n of Array.from(nodes.keys()).filter(isJavaInterfaceType)) {
   let extra = extraMethods.has(n) ? extraMethods.get(n) : '';
 
   let imports = extra.match('Precedence') ? `
-import org.jetbrains.annotations.NotNull;
-import com.shapesecurity.shift.ast.operators.Precedence;
+import javax.annotation.Nonnull;
+import com.shapesecurity.shift.es2016.ast.operators.Precedence;
 ` : '';
 
   let imp = node.parents.filter(isJavaInterfaceType);
