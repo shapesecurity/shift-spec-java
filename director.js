@@ -130,7 +130,6 @@ function direct(type, methods) {
       break;
     case 'node':
       let node = nodes.get(type.argument);
-      //console.log(type.argument, node);
       method = `
     @NotNull
     public static <State> State ${methodName}(
@@ -138,7 +137,7 @@ function direct(type, methods) {
       @NotNull ${type.argument} node) {
 `;
       if (node.children.length > 0) {
-        node.children.forEach(node => directNode(node, methods));
+        node.children.forEach(child => directNode(child, methods));
         method += '        ' + node.children.map(child => `if (node instanceof ${child}) {
             return reduce${child}(reducer, (${child}) node);
         }`).join(' else ') + ` else {
@@ -196,6 +195,8 @@ public final class Director {`;
 
 content += Array.from(baseMethods.keys()).sort().map(methodName => baseMethods.get(methodName)).join('\n');
 
-content += '\n}\n';
+content += `
+}
+`;
 
 fs.writeFileSync(outDir + reducerDir + 'Director.java', content, 'utf8');
