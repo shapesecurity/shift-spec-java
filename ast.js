@@ -14,14 +14,18 @@
  * limitations under the License.
  */
 
-"use strict";
+'use strict';
 
 const outDir = 'out/';
 const astDir = 'ast/';
 
 let fs = require('fs');
-try { fs.mkdirSync(outDir); } catch (ignored) {}
-try { fs.mkdirSync(outDir + astDir); } catch (ignored) {}
+try {
+  fs.mkdirSync(outDir);
+} catch (ignored) {}
+try {
+  fs.mkdirSync(outDir + astDir);
+} catch (ignored) {}
 
 let specConsumer = require('shift-spec-consumer');
 let spec = specConsumer(fs.readFileSync(require.resolve('shift-spec-idl/spec.idl'), 'utf8'), fs.readFileSync(require.resolve('shift-spec-idl/attribute-order.conf'), 'utf8'));
@@ -34,7 +38,7 @@ const enumImports = new Map([
   ['BinaryOperator', 'com.shapesecurity.shift.es2016.ast.operators.BinaryOperator'],
   ['UnaryOperator', 'com.shapesecurity.shift.es2016.ast.operators.UnaryOperator'],
   ['UpdateOperator', 'com.shapesecurity.shift.es2016.ast.operators.UpdateOperator'],
-  ['VariableDeclarationKind', 'com.shapesecurity.shift.es2016.ast.VariableDeclarationKind']
+  ['VariableDeclarationKind', 'com.shapesecurity.shift.es2016.ast.VariableDeclarationKind'],
 ]);
 
 
@@ -241,8 +245,7 @@ const extraMethods = new Map([
 ]);
 
 
-
-const forbiddenNames = ['super']
+const forbiddenNames = ['super'];
 function sanitize(str) {
   return forbiddenNames.indexOf(str) === -1 ? str : `_${str}`; // todo this is a bit dumb - what other names are reserved in Java?
 }
@@ -314,7 +317,9 @@ for (let n of Array.from(nodes.keys()).filter(n => !isJavaInterfaceType(n))) {
   let exs = ex.length === 1 ? ` extends ${ex}` : '';
 
   let attrs = node.attributes;
-  attrs.forEach(a => {a.name = sanitize(a.name); a.type = toJavaType(a.type);});
+  attrs.forEach(a => {
+    a.name = sanitize(a.name); a.type = toJavaType(a.type);
+  });
 
   let fields = attrs.filter(a => !a.inherited).map(a => `    @Nonnull
     public final ${a.type} ${a.name};
@@ -334,10 +339,10 @@ for (let n of Array.from(nodes.keys()).filter(n => !isJavaInterfaceType(n))) {
   let imports = `
 import javax.annotation.Nonnull;
 import com.shapesecurity.functional.data.HashCodeBuilder;
-` + 
+` +
     (attrs.some(a => a.type.match('ImmutableList')) ? 'import com.shapesecurity.functional.data.ImmutableList;\n' : '') +
     (attrs.some(a => a.type.match('Maybe')) ? 'import com.shapesecurity.functional.data.Maybe;\n' : '') +
-    (attrs.filter(a => !a.inherited && enums.has(a.type)).map(a => `import ${enumImports.get(a.type)};\n`)) +
+    attrs.filter(a => !a.inherited && enums.has(a.type)).map(a => `import ${enumImports.get(a.type)};\n`) +
     (extra.match('Precedence') ? 'import com.shapesecurity.shift.es2016.ast.operators.Precedence;\n' : '');
 
 
@@ -348,7 +353,7 @@ import com.shapesecurity.functional.data.HashCodeBuilder;
         return object instanceof ${n}${attrs.map(propEquals).join('')};
     }
 `;
-  
+
   let hashCode = `
     @Override
     public int hashCode() {
@@ -382,8 +387,8 @@ import com.shapesecurity.shift.es2016.ast.operators.Precedence;
 
   let imp = node.parents.filter(isJavaInterfaceType);
   if (imp.length !== node.parents.length) {
-    console.log(node.parents)
-    console.log(imp)
+    console.log(node.parents);
+    console.log(imp);
 
     throw `Interface type ${n} extends some type`;
   }

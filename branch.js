@@ -19,7 +19,9 @@
 let fs = require('fs');
 
 const outDir = 'out/';
-try { fs.mkdirSync(outDir); } catch (ignored) {}
+try {
+  fs.mkdirSync(outDir);
+} catch (ignored) {}
 
 let specConsumer = require('shift-spec-consumer');
 let spec = specConsumer(fs.readFileSync(require.resolve('shift-spec-idl/spec.idl'), 'utf8'), fs.readFileSync(require.resolve('shift-spec-idl/attribute-order.conf'), 'utf8'));
@@ -43,7 +45,7 @@ function isStatefulType(type) {
     case 'namedType':
     default:
       throw 'Not reached';
-  } 
+  }
 }
 
 function sanitize(name) {
@@ -185,7 +187,7 @@ class ${name} extends `;
 }`;
     }
 
-  classes.push(cl);
+    classes.push(cl);
   });
 }
 

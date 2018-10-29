@@ -20,7 +20,9 @@ let fs = require('fs');
 
 const outDir = 'out/';
 const reducerDir = 'reducer/';
-try { fs.mkdirSync(outDir + reducerDir); } catch (ignored) {}
+try {
+  fs.mkdirSync(outDir + reducerDir);
+} catch (ignored) {}
 
 let specConsumer = require('shift-spec-consumer');
 let spec = specConsumer(fs.readFileSync(require.resolve('shift-spec-idl/spec.idl'), 'utf8'), fs.readFileSync(require.resolve('shift-spec-idl/attribute-order.conf'), 'utf8'));
@@ -28,8 +30,7 @@ spec = require('./unions-to-interfaces').default(spec);
 let nodes = spec.nodes;
 
 
-
-const forbiddenNames = ['super']
+const forbiddenNames = ['super'];
 function sanitize(str) {
   return forbiddenNames.indexOf(str) === -1 ? str : `_${str}`; // todo this is a bit dumb - what other names are reserved in Java?
 }
@@ -48,9 +49,8 @@ function isStatefulType(type) {
     case 'namedType':
     default:
       throw 'Not reached';
-  } 
+  }
 }
-
 
 
 function methodNameFor(type) {
@@ -86,7 +86,7 @@ function toJavaType(type) {
 }
 
 function toArgument(type, name, thunked) {
-  return `${(thunked && type.kind === 'node') ? '() -> ' : ''}${methodNameFor(type)}(reducer, ${name})`;
+  return `${thunked && type.kind === 'node' ? '() -> ' : ''}${methodNameFor(type)}(reducer, ${name})`;
 }
 
 function nodeReducer(type, methods, thunked) {
@@ -100,7 +100,7 @@ function nodeReducer(type, methods, thunked) {
 }
 
 function directNode(name, methods, thunked) {
-  direct({kind: 'node', argument: name}, methods, thunked);
+  direct({ kind: 'node', argument: name }, methods, thunked);
 }
 
 function direct(type, methods, thunked) {

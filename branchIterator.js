@@ -19,7 +19,9 @@
 let fs = require('fs');
 
 const outDir = 'out/';
-try { fs.mkdirSync(outDir); } catch (ignored) {}
+try {
+  fs.mkdirSync(outDir);
+} catch (ignored) {}
 
 let specConsumer = require('shift-spec-consumer');
 let spec = specConsumer(fs.readFileSync(require.resolve('shift-spec-idl/spec.idl'), 'utf8'), fs.readFileSync(require.resolve('shift-spec-idl/attribute-order.conf'), 'utf8'));
@@ -42,7 +44,7 @@ function isStatefulType(type) {
     case 'namedType':
     default:
       throw 'Not reached';
-  } 
+  }
 }
 
 function sanitize(name) {
@@ -134,7 +136,6 @@ public class BranchIterator implements Iterable<Pair<BranchGetter, Node>> {
 			`;
 
 
-
 function base(type) {
   if (type.kind === 'list') return base(type.argument);
   if (type.kind === 'nullable') return base(type.argument);
@@ -171,7 +172,7 @@ for (let typeName of Array.from(nodes.keys()).sort()) {
     if (isListMaybe) {
       ifClause += `
 				${createdIndex ? '' : 'int '}index = ${nodeName}.${sanitize(a.name)}.length - 1;`;
-      createdIndex = true
+      createdIndex = true;
       ifClause += `
 				for (Maybe<${a.type.argument.argument.argument}> child : ${nodeName}.${sanitize(a.name)}.reverse()) {
 					if (child.isJust()) {
@@ -182,7 +183,7 @@ for (let typeName of Array.from(nodes.keys()).sort()) {
     } else if (isList) {
       ifClause += `
 				${createdIndex ? '' : 'int '}index = ${nodeName}.${sanitize(a.name)}.length - 1;`;
-      createdIndex = true
+      createdIndex = true;
       ifClause += `
 				for (${a.type.argument.argument} child : ${nodeName}.${sanitize(a.name)}.reverse()) {
 					list = list.cons(Pair.of(path.d(Branch.${branchName}(index)), child));
@@ -201,7 +202,7 @@ for (let typeName of Array.from(nodes.keys()).sort()) {
   });
 
   ifClause += `
-			}`
+			}`;
 
   ifClauses.push(ifClause);
 }
