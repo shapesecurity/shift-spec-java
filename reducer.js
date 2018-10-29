@@ -40,7 +40,6 @@ let specConsumer = require('shift-spec-consumer');
 let spec = specConsumer(fs.readFileSync(require.resolve('shift-spec-idl/spec.idl'), 'utf8'), fs.readFileSync(require.resolve('shift-spec-idl/attribute-order.conf'), 'utf8'));
 spec = require('./unions-to-interfaces').default(spec);
 let nodes = spec.nodes;
-let enums = spec.enums;
 
 let cloneReturnTypes = require('./find-max-super').default(nodes);
 
@@ -79,7 +78,7 @@ function isStatefulType(type) {
 }
 
 function sanitize(name) {
-  return (keywords.indexOf(name) !== -1 ? '_' : '') + name;
+  return (keywords.indexOf(name) === -1 ? '' : '_') + name;
 }
 
 
@@ -806,7 +805,8 @@ function toJavaType(type) {
       return type.argument;
     case 'union':
     case 'namedType':
-      throw 'Not reached'; // eliminated by unions-to-interfaces
+    default:
+      throw 'Not reached';
   }
 }
 
@@ -913,6 +913,8 @@ function deserializer(attr) {
           return `jsonObject.get("${attr.name}").getAsBoolean()`;
         case 'double':
           return `jsonObject.get("${attr.name}").getAsDouble()`;
+        default:
+          throw new Error('unreachable');
       }
     case 'node':
       return `(${attr.type.argument}) deserializeNode(jsonObject.get("${attr.name}"))`;

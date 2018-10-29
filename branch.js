@@ -27,7 +27,6 @@ let specConsumer = require('shift-spec-consumer');
 let spec = specConsumer(fs.readFileSync(require.resolve('shift-spec-idl/spec.idl'), 'utf8'), fs.readFileSync(require.resolve('shift-spec-idl/attribute-order.conf'), 'utf8'));
 spec = require('./unions-to-interfaces').default(spec);
 let nodes = spec.nodes;
-let enums = spec.enums;
 
 let keywords = ['super'];
 
@@ -49,7 +48,7 @@ function isStatefulType(type) {
 }
 
 function sanitize(name) {
-  return (keywords.indexOf(name) !== -1 ? '_' : '') + name;
+  return (keywords.indexOf(name) === -1 ? '' : '_') + name;
 }
 
 function cap(name) {
@@ -99,12 +98,6 @@ public abstract class Branch {
 		return Objects.hash(getClass());
 	}
 `;
-
-function base(type) {
-  if (type.kind === 'list') return base(type.argument);
-  if (type.kind === 'nullable') return base(type.argument);
-  return type.argument;
-}
 
 let classContent = [];
 let classes = [];

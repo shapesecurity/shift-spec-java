@@ -48,7 +48,7 @@ function isStatefulType(type) {
 }
 
 function sanitize(name) {
-  return (keywords.indexOf(name) !== -1 ? '_' : '') + name;
+  return (keywords.indexOf(name) === -1 ? '' : '_') + name;
 }
 
 function cap(name) {
@@ -135,12 +135,6 @@ public class BranchIterator implements Iterable<Pair<BranchGetter, Node>> {
 
 			`;
 
-
-function base(type) {
-  if (type.kind === 'list') return base(type.argument);
-  if (type.kind === 'nullable') return base(type.argument);
-  return type.argument;
-}
 
 let ifClauses = [];
 

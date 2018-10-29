@@ -277,7 +277,8 @@ function toJavaType(type) {
       return type.argument;
     case 'union':
     case 'namedType':
-      throw 'Not reached'; // eliminated by unions-to-interfaces
+    default:
+      throw 'Not reached';
   }
 }
 

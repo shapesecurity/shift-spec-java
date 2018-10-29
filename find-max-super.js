@@ -26,9 +26,11 @@ exports.default = function findMaxSupers(nodes) {
     switch (type.kind) {
       case 'node':
         bounds.add(type.argument);
+        break;
       case 'nullable':
       case 'list':
         addBase(type.argument);
+        break;
     }
   }
 

@@ -56,14 +56,15 @@ exports.default = function (obj) { // todo destructuring parameter, pending node
         type.argument = addUnions(type.argument);
         ret = type;
         break;
-      case 'namedType':
+      case 'namedType': {
         let child = namedTypes.get(type.argument);
         if (child.kind === 'union') {
           throw 'Not reached';
         }
         ret = addUnions(child);
         break;
-      case 'union':
+      }
+      case 'union': {
         let name = type.argument.map(t => t.argument).join('');
         newNodes.push(name);
         nodes.set(name, { children: [], parents: [], attributes: [] });
@@ -76,6 +77,7 @@ exports.default = function (obj) { // todo destructuring parameter, pending node
         });
         ret = { kind: 'node', argument: name };
         break;
+      }
       default:
         ret = type;
     }
