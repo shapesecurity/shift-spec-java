@@ -18,6 +18,7 @@
     "reducer": "node reducer",
     "template-structured-reducer": "node template-structured-reducer",
     "clean": "rm -rf out/",
+    "lint": "eslint .",
     "test": "npm run all"
   },
   "engines": {
@@ -29,6 +30,7 @@
     "shift-spec": "^2016.0.0"
   },
   "devDependencies": {
+    "eslint": "^5.8.0",
     "shift-spec-consumer": "^1.0.0"
   },
   "bugs": {
