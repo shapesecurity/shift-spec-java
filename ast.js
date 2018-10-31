@@ -366,7 +366,7 @@ ${equals}
 ${hashCode}${extra}
 }
 `;
-  fs.writeFile(outDir + astDir + n + '.java', clazz, 'utf8');
+  fs.writeFileSync(outDir + astDir + n + '.java', clazz, 'utf8');
 }
 
 // then, Java interfaces
@@ -395,7 +395,7 @@ import com.shapesecurity.shift.es2016.ast.operators.Precedence;
 public interface ${n}${imps} {${extra}}
 `;
 
-  fs.writeFile(outDir + astDir + n + '.java', body, 'utf8');
+  fs.writeFileSync(outDir + astDir + n + '.java', body, 'utf8');
 }
 
 

@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-"use strict";
+'use strict';
 
 let fs = require('fs');
 
@@ -52,8 +52,6 @@ function isStatefulType(type) {
 }
 
 
-let methods = new Map;
-
 
 function methodNameFor(type) {
   switch (type.kind) {
@@ -70,8 +68,7 @@ function methodNameFor(type) {
     case 'node':
       return `reduce${type.argument}`;
     default:
-      console.log('---' + JSON.stringify(type))
-      throw 'Not reached';
+      throw new Error('Not reached');
   }
 }
 
@@ -84,82 +81,75 @@ function toJavaType(type) {
     case 'node':
       return type.argument;
     default:
-      throw 'Not reached';
+      throw new Error('Not reached');
   }
 }
 
-function nodeReducer(type, nodeName) {
+function toArgument(type, name, thunked) {
+  return `${(thunked && type.kind === 'node') ? '() -> ' : ''}${methodNameFor(type)}(reducer, ${name})`;
+}
+
+function nodeReducer(type, methods, thunked) {
   let node = nodes.get(type);
   let attrs = node.attributes.filter(a => isStatefulType(a.type));
-  attrs.forEach(a => {direct(a.type);});
-  let params = nodeName + attrs.map(a => `, ${methodNameFor(a.type)}(reducer, ${nodeName}.${sanitize(a.name)})`).join('');
-  return `reducer.reduce${type}(${params})`;
+  attrs.forEach(a => {
+    direct(a.type, methods, thunked);
+  });
+  let args = 'node' + attrs.map(a => ', ' + toArgument(a.type, 'node.' + sanitize(a.name), thunked)).join('');
+  return `reducer.reduce${type}(${args})`;
 }
 
-function directNode(name) {
-  direct({kind: 'node', argument: name});
+function directNode(name, methods, thunked) {
+  direct({kind: 'node', argument: name}, methods, thunked);
 }
 
-function direct(type) {
+function direct(type, methods, thunked) {
   let methodName = methodNameFor(type);
   if (methods.has(methodName)) return;
   methods.set(methodName, null);
 
   let method;
   switch (type.kind) {
-    case 'nullable':
-      direct(type.argument);
+    case 'nullable': {
+      direct(type.argument, methods, thunked);
+      let innerType = type.argument.kind === 'list'
+        ? thunked ? 'ImmutableList<Supplier<State>>' : 'ImmutableList<State>'
+        : thunked ? 'Supplier<State>' : 'State';
       method = `
-    @NotNull
-    public static <State> Maybe<${type.argument.kind === 'list' ? 'ImmutableList<State>' : 'State'}> ${methodName}(
-      @NotNull Reducer<State> reducer,
-      @NotNull ${toJavaType(type)} maybe) {
-        return maybe.map(x -> ${methodNameFor(type.argument)}(reducer, x));
+    @Nonnull
+    public static <State> Maybe<${innerType}> ${methodName}(
+      @Nonnull ${thunked ? 'Thunked' : ''}Reducer<State> reducer,
+      @Nonnull ${toJavaType(type)} maybe) {
+        return maybe.map(x -> ${toArgument(type.argument, 'x', thunked)});
       }
 `;
       break;
-    case 'list':
-      direct(type.argument);
+    }
+    case 'list': {
+      direct(type.argument, methods, thunked);
+      let innerType = type.argument.kind === 'nullable'
+        ? thunked ? 'Maybe<Supplier<State>>' : 'Maybe<State>'
+        : thunked ? 'Supplier<State>' : 'State';
       method = `
-    @NotNull
-    public static <State> ImmutableList<${type.argument.kind === 'nullable' ? 'Maybe<State>' : 'State'}> ${methodName}(
-      @NotNull Reducer<State> reducer,
-      @NotNull ${toJavaType(type)} list) {
-        return list.map(x -> ${methodNameFor(type.argument)}(reducer, x));
+    @Nonnull
+    public static <State> ImmutableList<${innerType}> ${methodName}(
+      @Nonnull ${thunked ? 'Thunked' : ''}Reducer<State> reducer,
+      @Nonnull ${toJavaType(type)} list) {
+        return list.map(x -> ${toArgument(type.argument, 'x', thunked)});
       }
 `;
       break;
-    case 'node':
+    }
+    case 'node': {
       let node = nodes.get(type.argument);
-      //console.log(type.argument, node);
       method = `
-    @NotNull
+    @Nonnull
     public static <State> State ${methodName}(
-      @NotNull Reducer<State> reducer,
-      @NotNull ${type.argument} node) {
+      @Nonnull ${thunked ? 'Thunked' : ''}Reducer<State> reducer,
+      @Nonnull ${type.argument} node) {
 `;
       if (node.children.length > 0) {
-        /*
-        let childSet = new Set;
-        function addChildren(n) {
-          let node = nodes.get(n);
-          if (node.children.length > 0) {
-            node.children.forEach(addChildren);
-          } else {
-            childSet.add(n);
-          }
-        }
-        node.children.forEach(addChildren);
-        let children = Array.from(childSet).sort();
-        
-        method += '        ' + children.map(child => `if (node instanceof ${child}) {
-            ${child} tNode = (${child}) node);
-            return ${nodeReducer(child, 'tNode')};
-        }`).join(' else ') + ` else {
-            throw new RuntimeException("Not reached");
-        }
-`;*/
-        node.children.forEach(directNode);
+        node.children.forEach(child => directNode(child, methods, thunked));
         method += '        ' + node.children.map(child => `if (node instanceof ${child}) {
             return reduce${child}(reducer, (${child}) node);
         }`).join(' else ') + ` else {
@@ -168,11 +158,12 @@ function direct(type) {
 `;
 
       } else {
-        method += `        return ${nodeReducer(type.argument, 'node')};
+        method += `        return ${nodeReducer(type.argument, methods, thunked)};
 `;
       }
       method += '    }';
       break;
+    }
     default:
       throw 'Not reached';
   }
@@ -180,10 +171,14 @@ function direct(type) {
   methods.set(methodName, method);
 }
 
-directNode('Program');
+
+let baseMethods = new Map;
+directNode('Program', baseMethods, false);
+let thunkedMethods = new Map;
+directNode('Program', thunkedMethods, true);
 
 
-let content = `// Generated by shift-spec-java/director.js
+let content = thunked => `// Generated by shift-spec-java/director.js
 
 /*
  * Copyright 2016 Shape Security, Inc.
@@ -202,18 +197,19 @@ let content = `// Generated by shift-spec-java/director.js
  */
 
 
-package com.shapesecurity.shift.reducer;
+package com.shapesecurity.shift.es2016.reducer;
 
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
-import com.shapesecurity.shift.ast.*;
+import com.shapesecurity.shift.es2016.ast.*;
 
-import org.jetbrains.annotations.NotNull;
+import javax.annotation.Nonnull;
+${thunked ? 'import java.util.function.Supplier;' : ''}
 
-public final class Director {`;
+public final class ${thunked ? 'Thunked' : ''}Director {
+${Array.from((thunked ? thunkedMethods : baseMethods).keys()).sort().map(methodName => (thunked ? thunkedMethods : baseMethods).get(methodName)).join('\n')}
+}
+`;
 
-content += Array.from(methods.keys()).sort().map(methodName => methods.get(methodName)).join('\n');
-
-content += '\n}\n';
-
-fs.writeFile(outDir + reducerDir + 'Director.java', content, 'utf8');
+fs.writeFileSync(outDir + reducerDir + 'Director.java', content(false), 'utf8');
+fs.writeFileSync(outDir + reducerDir + 'ThunkedDirector.java', content(true), 'utf8');
