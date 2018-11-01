@@ -10,13 +10,7 @@
   },
   "main": "index.js",
   "scripts": {
-    "all": "npm run ast && npm run branch && npm run branch-iterator && npm run director && npm run reducer && npm run template-structured-reducer",
-    "ast": "node ast",
-    "branch": "node branch",
-    "branch-iterator": "node branchIterator",
-    "director": "node director",
-    "reducer": "node reducer",
-    "template-structured-reducer": "node template-structured-reducer",
+    "build": "mkdir -p out && (for i in scripts/build/*; do node $i; done)",
     "clean": "rm -rf out/",
     "lint": "eslint .",
     "test": "npm run all"

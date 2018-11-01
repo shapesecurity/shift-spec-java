@@ -38,10 +38,10 @@ try {
 
 let specConsumer = require('shift-spec-consumer');
 let spec = specConsumer(fs.readFileSync(require.resolve('shift-spec-idl/spec.idl'), 'utf8'), fs.readFileSync(require.resolve('shift-spec-idl/attribute-order.conf'), 'utf8'));
-spec = require('./unions-to-interfaces').default(spec);
+spec = require('../lib/unions-to-interfaces').default(spec);
 let nodes = spec.nodes;
 
-let cloneReturnTypes = require('./find-max-super').default(nodes);
+let cloneReturnTypes = require('../lib/find-max-super').default(nodes);
 
 let keywords = ['super'];
 
