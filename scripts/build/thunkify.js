@@ -27,7 +27,6 @@ const reducerDir = 'reducer/';
 ensureDir(outDir + reducerDir);
 
 
-
 function isNodeOrUnionOfNodes(type) {
   return type.typeName === 'Union' && type.arguments.every(isNodeOrUnionOfNodes) || spec.hasOwnProperty(type.typeName);
 }

@@ -31,7 +31,6 @@ ensureDir(outDir + serializerDir);
 ensureDir(outDir + rangeCheckerDir);
 
 
-
 let reducerContent = `${makeHeader(__filename)}
 
 package com.shapesecurity.shift.es2016.reducer;
