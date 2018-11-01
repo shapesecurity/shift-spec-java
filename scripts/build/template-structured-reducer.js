@@ -18,52 +18,12 @@
 
 let fs = require('fs');
 
+const { ensureDir, nodes, makeHeader, isStatefulType, sanitize, toJavaType } = require('../lib/utilities.js');
+
 const outDir = 'out/';
 const templateDir = 'template/';
-try {
-  fs.mkdirSync(outDir + templateDir);
-} catch (ignored) {}
+ensureDir(outDir + templateDir);
 
-let specConsumer = require('shift-spec-consumer');
-let spec = specConsumer(fs.readFileSync(require.resolve('shift-spec-idl/spec.idl'), 'utf8'), fs.readFileSync(require.resolve('shift-spec-idl/attribute-order.conf'), 'utf8'));
-spec = require('../lib/unions-to-interfaces').default(spec);
-let nodes = spec.nodes;
-
-const { makeHeader } = require('../lib/utilities.js');
-
-
-const forbiddenNames = ['super'];
-function sanitize(str) {
-  return forbiddenNames.indexOf(str) === -1 ? str : `_${str}`; // todo this is a bit dumb - what other names are reserved in Java?
-}
-
-function isStatefulType(type) {
-  switch (type.kind) {
-    case 'value':
-    case 'enum':
-      return false;
-    case 'nullable':
-      return isStatefulType(type.argument);
-    case 'list':
-    case 'node':
-      return true;
-    default:
-      throw 'Not reached';
-  }
-}
-
-function toJavaType(type) {
-  switch (type.kind) {
-    case 'nullable':
-      return `Maybe<${toJavaType(type.argument)}>`;
-    case 'list':
-      return `ImmutableList<${toJavaType(type.argument)}>`;
-    case 'node':
-      return 'Supplier<Node>';
-    default:
-      throw new Error('Not reached');
-  }
-}
 
 function force(type, name) {
   switch (type.kind) {
@@ -300,7 +260,7 @@ for (let typeName of Array.from(nodes.keys()).sort()) {
   if (type.children.length !== 0) continue;
 
   let fields = type.attributes.filter(field => isStatefulType(field.type));
-  let params = fields.map(f => `,\n        @Nonnull ${toJavaType(f.type)} ${sanitize(f.name)}`).join('');
+  let params = fields.map(f => `,\n        @Nonnull ${toJavaType(f.type, 'Supplier<Node>')} ${sanitize(f.name)}`).join('');
   let args = type.attributes.filter(f => f.name !== 'type').map(f => `${isStatefulType(f.type) ? force(f.type, sanitize(f.name)) : `node.${f.name}`}`).join(', ');
   content += `
     @Override

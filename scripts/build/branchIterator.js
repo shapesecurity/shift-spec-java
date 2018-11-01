@@ -18,41 +18,10 @@
 
 let fs = require('fs');
 
+const { nodes, makeHeader, isStatefulType, sanitize } = require('../lib/utilities.js');
+
 const outDir = 'out/';
-try {
-  fs.mkdirSync(outDir);
-} catch (ignored) {}
 
-let specConsumer = require('shift-spec-consumer');
-let spec = specConsumer(fs.readFileSync(require.resolve('shift-spec-idl/spec.idl'), 'utf8'), fs.readFileSync(require.resolve('shift-spec-idl/attribute-order.conf'), 'utf8'));
-spec = require('../lib/unions-to-interfaces').default(spec);
-let nodes = spec.nodes;
-
-const { makeHeader } = require('../lib/utilities.js');
-
-
-let keywords = ['super'];
-
-function isStatefulType(type) {
-  switch (type.kind) {
-    case 'value':
-    case 'enum':
-      return false;
-    case 'nullable':
-      return isStatefulType(type.argument);
-    case 'list':
-    case 'node':
-      return true;
-    case 'union':
-    case 'namedType':
-    default:
-      throw 'Not reached';
-  }
-}
-
-function sanitize(name) {
-  return (keywords.indexOf(name) === -1 ? '' : '_') + name;
-}
 
 function cap(name) {
   return name[0].toUpperCase() + name.slice(1);

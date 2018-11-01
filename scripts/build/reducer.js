@@ -18,71 +18,18 @@
 
 let fs = require('fs');
 
+const { ensureDir, nodes, makeHeader, isStatefulType, sanitize, toJavaType } = require('../lib/utilities.js');
+
+const cloneReturnTypes = require('../lib/find-max-super').default(nodes);
+
 const outDir = 'out/';
 const reducerDir = 'reducer/';
 const serializerDir = 'serialization/';
 const rangeCheckerDir = 'parser/';
-try {
-  fs.mkdirSync(outDir);
-} catch (ignored) {}
-try {
-  fs.mkdirSync(outDir + reducerDir);
-} catch (ignored) {}
-try {
-  fs.mkdirSync(outDir + serializerDir);
-} catch (ignored) {}
-try {
-  fs.mkdirSync(outDir + rangeCheckerDir);
-} catch (ignored) {}
+ensureDir(outDir + reducerDir);
+ensureDir(outDir + serializerDir);
+ensureDir(outDir + rangeCheckerDir);
 
-
-let specConsumer = require('shift-spec-consumer');
-let spec = specConsumer(fs.readFileSync(require.resolve('shift-spec-idl/spec.idl'), 'utf8'), fs.readFileSync(require.resolve('shift-spec-idl/attribute-order.conf'), 'utf8'));
-spec = require('../lib/unions-to-interfaces').default(spec);
-let nodes = spec.nodes;
-
-let cloneReturnTypes = require('../lib/find-max-super').default(nodes);
-
-const { makeHeader } = require('../lib/utilities.js');
-
-
-let keywords = ['super'];
-
-function name(type, def) {
-  if (!def) def = 'State'; // todo default value pending node 6
-  switch (type.kind) {
-    case 'nullable':
-      return `Maybe<${name(type.argument, def)}>`;
-    case 'list':
-      return `ImmutableList<${name(type.argument, def)}>`;
-    case 'namedType':
-    case 'union':
-      throw 'Not reached'; // eliminated by unions-to-interfaces
-    default:
-      return def;
-  }
-}
-
-function isStatefulType(type) {
-  switch (type.kind) {
-    case 'value':
-    case 'enum':
-      return false;
-    case 'nullable':
-      return isStatefulType(type.argument);
-    case 'list':
-    case 'node':
-      return true;
-    case 'union':
-    case 'namedType':
-    default:
-      throw 'Not reached';
-  }
-}
-
-function sanitize(name) {
-  return (keywords.indexOf(name) === -1 ? '' : '_') + name;
-}
 
 
 let reducerContent = `${makeHeader(__filename)}
@@ -101,7 +48,7 @@ for (let typeName of Array.from(nodes.keys()).sort()) {
   let type = nodes.get(typeName);
   if (type.children.length !== 0) continue;
 
-  let attrs = type.attributes.filter(f => isStatefulType(f.type)).map(f => `            @Nonnull ${name(f.type)} ${sanitize(f.name)}`);
+  let attrs = type.attributes.filter(f => isStatefulType(f.type)).map(f => `            @Nonnull ${toJavaType(f.type, 'State')} ${sanitize(f.name)}`);
   if (attrs.length === 0) {
     reducerContent += `
     @Nonnull
@@ -240,7 +187,7 @@ for (let typeName of Array.from(nodes.keys()).sort()) {
   if (type.children.length !== 0) continue;
 
   let attrs = type.attributes.filter(f => isStatefulType(f.type));
-  let attrStrings = attrs.map(f => `            @Nonnull ${name(f.type)} ${sanitize(f.name)}`);
+  let attrStrings = attrs.map(f => `            @Nonnull ${toJavaType(f.type, 'State')} ${sanitize(f.name)}`);
   if (attrStrings.length === 0) {
     monoidalContent += `
     @Nonnull
@@ -316,7 +263,7 @@ for (let typeName of Array.from(nodes.keys()).sort()) {
   if (type.children.length !== 0) continue;
 
   let attrs = type.attributes.filter(f => isStatefulType(f.type));
-  let attrStrings = attrs.map(f => `            @Nonnull ${name(f.type, 'Node')} ${sanitize(f.name)}`);
+  let attrStrings = attrs.map(f => `            @Nonnull ${toJavaType(f.type, 'Node')} ${sanitize(f.name)}`);
   if (attrStrings.length === 0) {
     cloneContent += `
     @Nonnull
@@ -522,7 +469,7 @@ for (let typeName of Array.from(nodes.keys()).sort()) {
     @Override
     public StringBuilder reduce${typeName}(@Nonnull ${typeName} node`;
 
-  let attrStrings = type.attributes.filter(f => isStatefulType(f.type)).map(f => `, @Nonnull ${name(f.type, 'StringBuilder')} ${sanitize(f.name)}`);
+  let attrStrings = type.attributes.filter(f => isStatefulType(f.type)).map(f => `, @Nonnull ${toJavaType(f.type, 'StringBuilder')} ${sanitize(f.name)}`);
 
   serializerContent += attrStrings.join('');
 
@@ -708,33 +655,6 @@ let innerDeserializerContent = `
                 switch (nodeType) {
 `;
 
-function toJavaType(type) {
-  switch (type.kind) {
-    case 'nullable':
-      return `Maybe<${toJavaType(type.argument)}>`;
-    case 'list':
-      return `ImmutableList<${toJavaType(type.argument)}>`;
-    case 'value':
-      switch (type.argument) {
-        case 'string':
-          return 'String';
-        case 'boolean':
-          return 'boolean';
-        case 'double':
-          return 'double';
-        default:
-          throw `Unhandled value type ${type.argument}`;
-      }
-    case 'node':
-    case 'enum':
-      return type.argument;
-    case 'union':
-    case 'namedType':
-    default:
-      throw 'Not reached';
-  }
-}
-
 let deserializers = new Map;
 
 function makeDeserializer(type) { // todo consider generics
@@ -898,7 +818,7 @@ for (let typeName of Array.from(nodes.keys()).sort()) {
   if (type.children.length !== 0) continue;
 
   let attrs = type.attributes.filter(f => isStatefulType(f.type));
-  let attrStrings = attrs.map(f => `, @Nonnull ${name(f.type, 'ImmutableList<Node>')} ${sanitize(f.name)}`);
+  let attrStrings = attrs.map(f => `, @Nonnull ${toJavaType(f.type, 'ImmutableList<Node>')} ${sanitize(f.name)}`);
   flatternerContent += `
     @Nonnull
     @Override
@@ -987,7 +907,7 @@ for (let typeName of Array.from(nodes.keys()).sort()) {
   if (type.children.length !== 0) continue;
 
   let attrs = type.attributes.filter(f => isStatefulType(f.type));
-  let attrStrings = attrs.map(f => `, @Nonnull ${name(f.type, 'RangeChecker')} ${sanitize(f.name)}`);
+  let attrStrings = attrs.map(f => `, @Nonnull ${toJavaType(f.type, 'RangeChecker')} ${sanitize(f.name)}`);
   rangeCheckerContent += `
     @Nonnull
     @Override

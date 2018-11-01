@@ -18,41 +18,11 @@
 
 let fs = require('fs');
 
+const { ensureDir, nodes, makeHeader, isStatefulType, sanitize, toJavaType } = require('../lib/utilities.js');
+
 const outDir = 'out/';
 const reducerDir = 'reducer/';
-try {
-  fs.mkdirSync(outDir + reducerDir);
-} catch (ignored) {}
-
-let specConsumer = require('shift-spec-consumer');
-let spec = specConsumer(fs.readFileSync(require.resolve('shift-spec-idl/spec.idl'), 'utf8'), fs.readFileSync(require.resolve('shift-spec-idl/attribute-order.conf'), 'utf8'));
-spec = require('../lib/unions-to-interfaces').default(spec);
-let nodes = spec.nodes;
-
-const { makeHeader } = require('../lib/utilities.js');
-
-
-const forbiddenNames = ['super'];
-function sanitize(str) {
-  return forbiddenNames.indexOf(str) === -1 ? str : `_${str}`; // todo this is a bit dumb - what other names are reserved in Java?
-}
-
-function isStatefulType(type) {
-  switch (type.kind) {
-    case 'value':
-    case 'enum':
-      return false;
-    case 'nullable':
-      return isStatefulType(type.argument);
-    case 'list':
-    case 'node':
-      return true;
-    case 'union':
-    case 'namedType':
-    default:
-      throw 'Not reached';
-  }
-}
+ensureDir(outDir + reducerDir);
 
 
 function methodNameFor(type) {
@@ -69,19 +39,6 @@ function methodNameFor(type) {
       return `reduceList${type.argument.argument}`;
     case 'node':
       return `reduce${type.argument}`;
-    default:
-      throw new Error('Not reached');
-  }
-}
-
-function toJavaType(type) {
-  switch (type.kind) {
-    case 'nullable':
-      return `Maybe<${toJavaType(type.argument)}>`;
-    case 'list':
-      return `ImmutableList<${toJavaType(type.argument)}>`;
-    case 'node':
-      return type.argument;
     default:
       throw new Error('Not reached');
   }

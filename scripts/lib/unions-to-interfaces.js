@@ -16,11 +16,7 @@
 
 'use strict';
 
-exports.default = function (obj) { // todo destructuring parameter, pending node 6
-  let nodes = obj.nodes;
-  let enums = obj.enums;
-  let namedTypes = obj.namedTypes;
-
+module.exports = function ({ nodes, enums, namedTypes }) {
   function inherits(child, parent) {
     let parents = nodes.get(child).parents;
     if (parents.indexOf(parent) === -1) {

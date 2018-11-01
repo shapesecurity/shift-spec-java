@@ -16,25 +16,14 @@
 
 'use strict';
 
+let fs = require('fs');
+
+const { ensureDir, nodes, enums, makeHeader } = require('../lib/utilities.js');
+
 const outDir = 'out/';
 const astDir = 'ast/';
+ensureDir(outDir + astDir);
 
-let fs = require('fs');
-try {
-  fs.mkdirSync(outDir);
-} catch (ignored) {}
-try {
-  fs.mkdirSync(outDir + astDir);
-} catch (ignored) {}
-
-let specConsumer = require('shift-spec-consumer');
-let spec = specConsumer(fs.readFileSync(require.resolve('shift-spec-idl/spec.idl'), 'utf8'), fs.readFileSync(require.resolve('shift-spec-idl/attribute-order.conf'), 'utf8'));
-spec = require('../lib/unions-to-interfaces').default(spec);
-let nodes = spec.nodes;
-let enums = spec.enums;
-
-
-const { makeHeader } = require('../lib/utilities.js');
 
 const enumImports = new Map([
   ['CompoundAssignmentOperator', 'com.shapesecurity.shift.es2016.ast.operators.CompoundAssignmentOperator'],

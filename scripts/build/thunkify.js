@@ -18,21 +18,15 @@
 
 let fs = require('fs');
 
+const { ensureDir, makeHeader, sanitize } = require('../lib/utilities.js');
+
+const spec = require('shift-spec').default;
+
 const outDir = 'out/';
 const reducerDir = 'reducer/';
-try {
-  fs.mkdirSync(outDir + reducerDir);
-} catch (ignored) {}
-
-let spec = require('shift-spec').default;
-
-const { makeHeader } = require('../lib/utilities.js');
+ensureDir(outDir + reducerDir);
 
 
-const forbiddenNames = ['super'];
-function sanitize(str) {
-  return forbiddenNames.indexOf(str) === -1 ? str : `_${str}`; // todo this is a bit dumb - what other names are reserved in Java?
-}
 
 function isNodeOrUnionOfNodes(type) {
   return type.typeName === 'Union' && type.arguments.every(isNodeOrUnionOfNodes) || spec.hasOwnProperty(type.typeName);
