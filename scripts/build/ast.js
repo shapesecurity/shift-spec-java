@@ -60,6 +60,13 @@ const extraMethods = new Map([
         return Precedence.ASSIGNMENT;
     }
 `],
+  ['AwaitExpression', `
+    @Override
+    @Nonnull
+    public Precedence getPrecedence() {
+        return Precedence.PREFIX;
+    }
+`],
   ['BinaryExpression', `
     @Override
     @Nonnull
