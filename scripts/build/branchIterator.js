@@ -18,7 +18,7 @@
 
 let fs = require('fs');
 
-const { nodes, makeHeader, isStatefulType, sanitize } = require('../lib/utilities.js');
+const { nodes, makeHeader, isStatefulType, sanitize, year } = require('../lib/utilities.js');
 
 const outDir = 'out/';
 
@@ -33,13 +33,13 @@ function uncap(name) {
 
 let content = `${makeHeader(__filename)}
 
-package com.shapesecurity.shift.es2016.path;
+package com.shapesecurity.shift.es${year}.path;
 
 import com.shapesecurity.functional.Pair;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
-import com.shapesecurity.shift.es2016.ast.*;
-import com.shapesecurity.shift.es2016.ast.SpreadElementExpression;
+import com.shapesecurity.shift.es${year}.ast.*;
+import com.shapesecurity.shift.es${year}.ast.SpreadElementExpression;
 import javax.annotation.Nonnull;
 
 import java.util.Iterator;
