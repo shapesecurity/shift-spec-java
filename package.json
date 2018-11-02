@@ -10,15 +10,10 @@
   },
   "main": "index.js",
   "scripts": {
-    "all": "npm run ast && npm run branch && npm run branch-iterator && npm run director && npm run reducer && npm run template-structured-reducer",
-    "ast": "node ast",
-    "branch": "node branch",
-    "branch-iterator": "node branchIterator",
-    "director": "node director",
-    "reducer": "node reducer",
-    "template-structured-reducer": "node template-structured-reducer",
+    "build": "mkdir -p out && (for i in scripts/build/*; do node $i; done)",
     "clean": "rm -rf out/",
-    "test": "npm run all"
+    "lint": "eslint .",
+    "test": "npm run build"
   },
   "engines": {
     "node": ">= 5"
@@ -29,6 +24,7 @@
     "shift-spec": "^2016.0.0"
   },
   "devDependencies": {
+    "eslint": "^5.8.0",
     "shift-spec-consumer": "^1.0.0"
   },
   "bugs": {

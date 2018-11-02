@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-"use strict";
+'use strict';
 
 exports.default = function findMaxSupers(nodes) {
   // Returns a map A -> B, which is:
@@ -26,9 +26,11 @@ exports.default = function findMaxSupers(nodes) {
     switch (type.kind) {
       case 'node':
         bounds.add(type.argument);
+        break;
       case 'nullable':
       case 'list':
         addBase(type.argument);
+        break;
     }
   }
 
@@ -62,6 +64,6 @@ exports.default = function findMaxSupers(nodes) {
   }
 
   return new Map(Array.from(nodes.keys()).map(n => [n, findBoundFor(n)]));
-}
+};
 
 

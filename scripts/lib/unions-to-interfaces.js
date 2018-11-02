@@ -14,13 +14,9 @@
  * limitations under the License.
  */
 
-"use strict";
+'use strict';
 
-exports.default = function (obj) { // todo destructuring parameter, pending node 6
-  let nodes = obj.nodes;
-  let enums = obj.enums;
-  let namedTypes = obj.namedTypes;
-
+module.exports = function ({ nodes, enums, namedTypes }) {
   function inherits(child, parent) {
     let parents = nodes.get(child).parents;
     if (parents.indexOf(parent) === -1) {
@@ -37,10 +33,12 @@ exports.default = function (obj) { // todo destructuring parameter, pending node
       if (nodes.has(name)) {
         throw `Node named ${name} already exists!`;
       }
-      nodes.set(name, {children: [], parents: [], attributes: []});
+      nodes.set(name, { children: [], parents: [], attributes: [] });
       newNodes.push(name);
-      type.argument.forEach(t => {inherits(t.argument, name);});
-      namedTypes.set(name, {kind: 'node', argument: name});
+      type.argument.forEach(t => {
+        inherits(t.argument, name);
+      });
+      namedTypes.set(name, { kind: 'node', argument: name });
     }
   });
 
@@ -54,17 +52,18 @@ exports.default = function (obj) { // todo destructuring parameter, pending node
         type.argument = addUnions(type.argument);
         ret = type;
         break;
-      case 'namedType':
+      case 'namedType': {
         let child = namedTypes.get(type.argument);
         if (child.kind === 'union') {
           throw 'Not reached';
         }
         ret = addUnions(child);
         break;
-      case 'union':
+      }
+      case 'union': {
         let name = type.argument.map(t => t.argument).join('');
         newNodes.push(name);
-        nodes.set(name, {children: [], parents: [], attributes: []});
+        nodes.set(name, { children: [], parents: [], attributes: [] });
         type.argument.forEach(t => {
           if (t.kind === 'node' || t.kind === 'namedType') {
             inherits(t.argument, name);
@@ -72,8 +71,9 @@ exports.default = function (obj) { // todo destructuring parameter, pending node
             throw `Union of unhandled type ${JSON.stringify(t)}`;
           }
         });
-        ret = {kind: 'node', argument: name};
+        ret = { kind: 'node', argument: name };
         break;
+      }
       default:
         ret = type;
     }
@@ -82,7 +82,9 @@ exports.default = function (obj) { // todo destructuring parameter, pending node
   }
 
   nodes.forEach(n => {
-    n.attributes.forEach((a, i) => {n.attributes[i].type = addUnions(a.type);});
+    n.attributes.forEach((a, i) => {
+      n.attributes[i].type = addUnions(a.type);
+    });
   });
 
   // Ensure that our artificial union types inherit, where possible.
@@ -147,5 +149,5 @@ exports.default = function (obj) { // todo destructuring parameter, pending node
   }
 
 
-  return {nodes, enums};
-}
+  return { nodes, enums };
+};
