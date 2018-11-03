@@ -18,7 +18,7 @@
 
 let fs = require('fs');
 
-const { ensureDir, nodes, makeHeader, isStatefulType, sanitize, toJavaType } = require('../lib/utilities.js');
+const { ensureDir, nodes, makeHeader, isStatefulType, sanitize, toJavaType, year } = require('../lib/utilities.js');
 
 const cloneReturnTypes = require('../lib/find-max-super').default(nodes);
 
@@ -33,11 +33,11 @@ ensureDir(outDir + rangeCheckerDir);
 
 let reducerContent = `${makeHeader(__filename)}
 
-package com.shapesecurity.shift.es2016.reducer;
+package com.shapesecurity.shift.es${year}.reducer;
 
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
-import com.shapesecurity.shift.es2016.ast.*;
+import com.shapesecurity.shift.es${year}.ast.*;
 
 import javax.annotation.Nonnull;
 
@@ -69,11 +69,11 @@ fs.writeFileSync(outDir + reducerDir + 'Reducer.java', reducerContent, 'utf-8');
 
 let thunkedReducerContent = `${makeHeader(__filename)}
 
-package com.shapesecurity.shift.es2016.reducer;
+package com.shapesecurity.shift.es${year}.reducer;
 
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
-import com.shapesecurity.shift.es2016.ast.*;
+import com.shapesecurity.shift.es${year}.ast.*;
 
 import javax.annotation.Nonnull;
 import java.util.function.Supplier;
@@ -121,10 +121,10 @@ fs.writeFileSync(outDir + reducerDir + 'ThunkedReducer.java', thunkedReducerCont
 
 let monoidalContent = `${makeHeader(__filename)}
 
-package com.shapesecurity.shift.es2016.reducer;
+package com.shapesecurity.shift.es${year}.reducer;
 
 import com.shapesecurity.functional.data.*;
-import com.shapesecurity.shift.es2016.ast.*;
+import com.shapesecurity.shift.es${year}.ast.*;
 
 import javax.annotation.Nonnull;
 
@@ -223,11 +223,11 @@ fs.writeFileSync(outDir + reducerDir + 'MonoidalReducer.java', monoidalContent, 
 
 let cloneContent = `${makeHeader(__filename)}
 
-package com.shapesecurity.shift.es2016.reducer;
+package com.shapesecurity.shift.es${year}.reducer;
 
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
-import com.shapesecurity.shift.es2016.ast.*;
+import com.shapesecurity.shift.es${year}.ast.*;
 import javax.annotation.Nonnull;
 
 public class ReconstructingReducer implements Reducer<Node> {`;
@@ -294,14 +294,14 @@ package com.shapesecurity.shift.serialization;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
 import com.shapesecurity.functional.data.NonEmptyImmutableList;
-import com.shapesecurity.shift.es2016.ast.*;
-import com.shapesecurity.shift.es2016.ast.operators.BinaryOperator;
-import com.shapesecurity.shift.es2016.ast.operators.CompoundAssignmentOperator;
-import com.shapesecurity.shift.es2016.ast.operators.UnaryOperator;
-import com.shapesecurity.shift.es2016.ast.operators.UpdateOperator;
+import com.shapesecurity.shift.es${year}.ast.*;
+import com.shapesecurity.shift.es${year}.ast.operators.BinaryOperator;
+import com.shapesecurity.shift.es${year}.ast.operators.CompoundAssignmentOperator;
+import com.shapesecurity.shift.es${year}.ast.operators.UnaryOperator;
+import com.shapesecurity.shift.es${year}.ast.operators.UpdateOperator;
 import com.shapesecurity.shift.utils.Utils;
-import com.shapesecurity.shift.es2016.reducer.Director;
-import com.shapesecurity.shift.es2016.reducer.Reducer;
+import com.shapesecurity.shift.es${year}.reducer.Director;
+import com.shapesecurity.shift.es${year}.reducer.Reducer;
 
 import javax.annotation.Nonnull;
 
@@ -491,11 +491,11 @@ import com.google.gson.*;
 
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
-import com.shapesecurity.shift.es2016.ast.*;
-import com.shapesecurity.shift.es2016.ast.operators.BinaryOperator;
-import com.shapesecurity.shift.es2016.ast.operators.CompoundAssignmentOperator;
-import com.shapesecurity.shift.es2016.ast.operators.UnaryOperator;
-import com.shapesecurity.shift.es2016.ast.operators.UpdateOperator;
+import com.shapesecurity.shift.es${year}.ast.*;
+import com.shapesecurity.shift.es${year}.ast.operators.BinaryOperator;
+import com.shapesecurity.shift.es${year}.ast.operators.CompoundAssignmentOperator;
+import com.shapesecurity.shift.es${year}.ast.operators.UnaryOperator;
+import com.shapesecurity.shift.es${year}.ast.operators.UpdateOperator;
 
 import org.json.JSONException;
 
@@ -792,11 +792,11 @@ fs.writeFileSync(outDir + serializerDir + 'Deserializer.java', deserializerConte
 
 let flatternerContent = `${makeHeader(__filename)}
 
-package com.shapesecurity.shift.es2016.reducer;
+package com.shapesecurity.shift.es${year}.reducer;
 
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
-import com.shapesecurity.shift.es2016.ast.*;
+import com.shapesecurity.shift.es${year}.ast.*;
 import javax.annotation.Nonnull;
 
 public class Flattener extends MonoidalReducer<ImmutableList<Node>> {
@@ -847,8 +847,8 @@ package com.shapesecurity.shift.parser;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
 import com.shapesecurity.functional.data.Monoid;
-import com.shapesecurity.shift.es2016.ast.*;
-import com.shapesecurity.shift.es2016.reducer.MonoidalReducer;
+import com.shapesecurity.shift.es${year}.ast.*;
+import com.shapesecurity.shift.es${year}.reducer.MonoidalReducer;
 import javax.annotation.Nonnull;
 
 import static org.junit.Assert.assertTrue;

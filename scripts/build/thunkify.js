@@ -18,7 +18,7 @@
 
 let fs = require('fs');
 
-const { ensureDir, makeHeader, sanitize } = require('../lib/utilities.js');
+const { ensureDir, makeHeader, sanitize, year } = require('../lib/utilities.js');
 
 const spec = require('shift-spec').default;
 
@@ -83,11 +83,11 @@ function force(type, name) {
 
 let content = `${makeHeader(__filename)}
 
-package com.shapesecurity.shift.es2016.reducer;
+package com.shapesecurity.shift.es${year}.reducer;
 
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
-import com.shapesecurity.shift.es2016.ast.*;
+import com.shapesecurity.shift.es${year}.ast.*;
 
 import javax.annotation.Nonnull;
 import java.util.function.Supplier;

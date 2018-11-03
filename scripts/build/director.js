@@ -18,7 +18,7 @@
 
 let fs = require('fs');
 
-const { ensureDir, nodes, makeHeader, isStatefulType, sanitize, toJavaType } = require('../lib/utilities.js');
+const { ensureDir, nodes, makeHeader, isStatefulType, sanitize, toJavaType, year } = require('../lib/utilities.js');
 
 const outDir = 'out/';
 const reducerDir = 'reducer/';
@@ -139,11 +139,11 @@ directNode('Program', thunkedMethods, true);
 
 let content = thunked => `${makeHeader(__filename)}
 
-package com.shapesecurity.shift.es2016.reducer;
+package com.shapesecurity.shift.es${year}.reducer;
 
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
-import com.shapesecurity.shift.es2016.ast.*;
+import com.shapesecurity.shift.es${year}.ast.*;
 
 import javax.annotation.Nonnull;
 ${thunked ? 'import java.util.function.Supplier;' : ''}

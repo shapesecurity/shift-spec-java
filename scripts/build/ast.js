@@ -18,7 +18,7 @@
 
 let fs = require('fs');
 
-const { ensureDir, nodes, enums, makeHeader } = require('../lib/utilities.js');
+const { ensureDir, nodes, enums, makeHeader, year } = require('../lib/utilities.js');
 
 const outDir = 'out/';
 const astDir = 'ast/';
@@ -26,11 +26,11 @@ ensureDir(outDir + astDir);
 
 
 const enumImports = new Map([
-  ['CompoundAssignmentOperator', 'com.shapesecurity.shift.es2016.ast.operators.CompoundAssignmentOperator'],
-  ['BinaryOperator', 'com.shapesecurity.shift.es2016.ast.operators.BinaryOperator'],
-  ['UnaryOperator', 'com.shapesecurity.shift.es2016.ast.operators.UnaryOperator'],
-  ['UpdateOperator', 'com.shapesecurity.shift.es2016.ast.operators.UpdateOperator'],
-  ['VariableDeclarationKind', 'com.shapesecurity.shift.es2016.ast.VariableDeclarationKind'],
+  ['CompoundAssignmentOperator', `com.shapesecurity.shift.es${year}.ast.operators.CompoundAssignmentOperator`],
+  ['BinaryOperator', `com.shapesecurity.shift.es${year}.ast.operators.BinaryOperator`],
+  ['UnaryOperator', `com.shapesecurity.shift.es${year}.ast.operators.UnaryOperator`],
+  ['UpdateOperator', `com.shapesecurity.shift.es${year}.ast.operators.UpdateOperator`],
+  ['VariableDeclarationKind', `com.shapesecurity.shift.es${year}.ast.VariableDeclarationKind`],
 ]);
 
 
@@ -58,6 +58,13 @@ const extraMethods = new Map([
     @Nonnull
     public Precedence getPrecedence() {
         return Precedence.ASSIGNMENT;
+    }
+`],
+  ['AwaitExpression', `
+    @Override
+    @Nonnull
+    public Precedence getPrecedence() {
+        return Precedence.PREFIX;
     }
 `],
   ['BinaryExpression', `
@@ -277,7 +284,7 @@ function toJavaType(type) {
 
 const header = `${makeHeader(__filename)}
 
-package com.shapesecurity.shift.es2016.ast;
+package com.shapesecurity.shift.es${year}.ast;
 `;
 
 // actually generate the files
@@ -320,7 +327,7 @@ import com.shapesecurity.functional.data.HashCodeBuilder;
     (attrs.some(a => a.type.match('ImmutableList')) ? 'import com.shapesecurity.functional.data.ImmutableList;\n' : '') +
     (attrs.some(a => a.type.match('Maybe')) ? 'import com.shapesecurity.functional.data.Maybe;\n' : '') +
     attrs.filter(a => !a.inherited && enums.has(a.type)).map(a => `import ${enumImports.get(a.type)};\n`) +
-    (extra.match('Precedence') ? 'import com.shapesecurity.shift.es2016.ast.operators.Precedence;\n' : '');
+    (extra.match('Precedence') ? `import com.shapesecurity.shift.es${year}.ast.operators.Precedence;\n` : '');
 
 
   let propEquals = a => a.type === 'boolean' || a.type === 'double' ? ` && this.${a.name} == ((${n}) object).${a.name}` : ` && this.${a.name}.equals(((${n}) object).${a.name})`;
@@ -359,7 +366,7 @@ for (let n of Array.from(nodes.keys()).filter(isJavaInterfaceType)) {
 
   let imports = extra.match('Precedence') ? `
 import javax.annotation.Nonnull;
-import com.shapesecurity.shift.es2016.ast.operators.Precedence;
+import com.shapesecurity.shift.es${year}.ast.operators.Precedence;
 ` : '';
 
   let imp = node.parents.filter(isJavaInterfaceType);

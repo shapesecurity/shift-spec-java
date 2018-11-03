@@ -18,7 +18,7 @@
 
 let fs = require('fs');
 
-const { nodes, makeHeader, isStatefulType, sanitize } = require('../lib/utilities.js');
+const { nodes, makeHeader, isStatefulType, sanitize, year } = require('../lib/utilities.js');
 
 const outDir = 'out/';
 
@@ -29,11 +29,11 @@ function cap(name) {
 
 let branchContent = `${makeHeader(__filename)}
 
-package com.shapesecurity.shift.es2016.path;
+package com.shapesecurity.shift.es${year}.path;
 
 
 import com.shapesecurity.functional.data.Maybe;
-import com.shapesecurity.shift.es2016.ast.*;
+import com.shapesecurity.shift.es${year}.ast.*;
 
 import java.util.Objects;
 

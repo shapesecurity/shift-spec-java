@@ -18,7 +18,7 @@
 
 let fs = require('fs');
 
-const { ensureDir, nodes, makeHeader, isStatefulType, sanitize, toJavaType } = require('../lib/utilities.js');
+const { ensureDir, nodes, makeHeader, isStatefulType, sanitize, toJavaType, year } = require('../lib/utilities.js');
 
 const outDir = 'out/';
 const templateDir = 'template/';
@@ -44,7 +44,7 @@ function force(type, name) {
 
 let content = `${makeHeader(__filename)}
 
-package com.shapesecurity.shift.es2016.template;
+package com.shapesecurity.shift.es${year}.template;
 
 import com.shapesecurity.functional.F;
 import com.shapesecurity.functional.Pair;
@@ -52,8 +52,8 @@ import com.shapesecurity.functional.data.ConcatList;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
 import com.shapesecurity.functional.data.NonEmptyImmutableList;
-import com.shapesecurity.shift.es2016.ast.*;
-import com.shapesecurity.shift.es2016.reducer.ThunkedReducer;
+import com.shapesecurity.shift.es${year}.ast.*;
+import com.shapesecurity.shift.es${year}.reducer.ThunkedReducer;
 
 import javax.annotation.Nonnull;
 import java.util.HashMap;
