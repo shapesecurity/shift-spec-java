@@ -19,8 +19,7 @@
 let fs = require('fs');
 
 const { ensureDir, nodes, makeHeader, isStatefulType, sanitize, toJavaType, year } = require('../lib/utilities.js');
-const { makeCloneAttribute, cloneReturnTypes } = require('../lib/clone-utilities.js');
-
+const { makeCloneAttribute, makeEquals, cloneReturnTypes } = require('../lib/clone-utilities.js');
 
 const outDir = 'out/';
 const reducerDir = 'reducer/';
@@ -36,7 +35,20 @@ import com.shapesecurity.functional.data.Maybe;
 import com.shapesecurity.shift.es${year}.ast.*;
 import javax.annotation.Nonnull;
 
-public class ReconstructingReducer implements Reducer<Node> {`;
+public class LazyReconstructingReducer implements Reducer<Node> {
+    public static <T extends Node> boolean listRefEquals(ImmutableList<T> a, ImmutableList<Node> b) {
+        return a.length == b.length && !a.zipWith((l, r) -> l == r, b).exists(v -> !v); // I would prefer .every instead of !.exists(!), but we don't seem to have that
+    }
+
+    public static <T extends Node> boolean maybeRefEquals(Maybe<T> a, Maybe<Node> b) {
+        return a.isJust() == b.isJust() && a.maybe(true, l -> l == b.fromJust());
+    }
+
+    public static <T extends Node> boolean listMaybeRefEquals(ImmutableList<Maybe<T>> a, ImmutableList<Maybe<Node>> b) {
+        return a.length == b.length && !a.zipWith(LazyReconstructingReducer::maybeRefEquals, b).exists(v -> !v);
+    }
+
+`;
 
 
 for (let typeName of Array.from(nodes.keys()).sort()) {
@@ -44,26 +56,32 @@ for (let typeName of Array.from(nodes.keys()).sort()) {
   if (type.children.length !== 0) continue;
 
   let attrs = type.attributes.filter(f => isStatefulType(f.type));
-  let attrStrings = attrs.map(f => `            @Nonnull ${toJavaType(f.type, 'Node')} ${sanitize(f.name)}`);
-  if (attrStrings.length === 0) {
+  if (attrs.length === 0) {
     cloneContent += `
     @Nonnull
     @Override
-    public ${cloneReturnTypes.get(typeName)} reduce${typeName}(@Nonnull ${typeName} node`;
+    public ${cloneReturnTypes.get(typeName)} reduce${typeName}(@Nonnull ${typeName} node) {
+        return node;
+    }
+`;
   } else {
+    let attrStrings = attrs.map(f => `            @Nonnull ${toJavaType(f.type, 'Node')} ${sanitize(f.name)}`);
+    let equals = attrs.map(makeEquals).join(' && ');
     cloneContent += `
     @Nonnull
     @Override
     public ${cloneReturnTypes.get(typeName)} reduce${typeName}(
             @Nonnull ${typeName} node,
-${attrStrings.join(',\n')}`;
-  }
-  cloneContent += `) {
+${attrStrings.join(',\n')}) {
+        if (${equals}) {
+            return node;
+        }
         return new ${typeName}(${type.attributes.map(makeCloneAttribute).join(', ')});
     }
 `;
+  }
 }
 
 cloneContent += '}\n';
 
-fs.writeFileSync(outDir + reducerDir + 'ReconstructingReducer.java', cloneContent, 'utf-8');
+fs.writeFileSync(outDir + reducerDir + 'LazyReconstructingReducer.java', cloneContent, 'utf-8');
