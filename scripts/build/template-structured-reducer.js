@@ -19,6 +19,7 @@
 let fs = require('fs');
 
 const { ensureDir, nodes, makeHeader, isStatefulType, sanitize, toJavaType, year } = require('../lib/utilities.js');
+const { makeEquals } = require('../lib/clone-utilities.js');
 
 const outDir = 'out/';
 const templateDir = 'template/';
@@ -28,14 +29,14 @@ ensureDir(outDir + templateDir);
 function force(type, name) {
   switch (type.kind) {
     case 'nullable':
-      return `applyMaybeLabels(node.${name}, ${name})`;
+      return `applyMaybeLabels(node.${name}, ${name}Thunk)`;
     case 'list':
       if (type.argument.kind === 'nullable') {
-        return `applyListMaybeLabels(node.${name}, ${name})`;
+        return `applyListMaybeLabels(node.${name}, ${name}Thunk)`;
       }
-      return `applyListLabels(node.${name}, ${name})`;
+      return `applyListLabels(node.${name}, ${name}Thunk)`;
     case 'node':
-      return `(${type.argument}) ${name}.get()`;
+      return `(${type.argument}) ${name}Thunk.get()`;
     default:
       throw new Error('Not reached');
   }
@@ -63,6 +64,11 @@ import java.util.Map;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import static com.shapesecurity.shift.es2016.reducer.LazyReconstructingReducer.listMaybeRefEquals;
+import static com.shapesecurity.shift.es2016.reducer.LazyReconstructingReducer.listRefEquals;
+import static com.shapesecurity.shift.es2016.reducer.LazyReconstructingReducer.maybeRefEquals;
+
 
 public class ReduceStructured implements ThunkedReducer<Node> {
     public static abstract class Label {}
@@ -156,8 +162,7 @@ public class ReduceStructured implements ThunkedReducer<Node> {
         this.currentNodeMayHaveStructuredLabel = false;
     }
 
-    Node applyReplacer(Node original, Node transformed) {
-        List<Label> labels = this.nodeToLabels.get(original);
+    Node applyReplacer(List<Label> labels, Node transformed) {
         if (labels == null || labels.isEmpty()) {
             return transformed;
         }
@@ -260,18 +265,41 @@ for (let typeName of Array.from(nodes.keys()).sort()) {
   if (type.children.length !== 0) continue;
 
   let fields = type.attributes.filter(field => isStatefulType(field.type));
-  let params = fields.map(f => `,\n        @Nonnull ${toJavaType(f.type, 'Supplier<Node>')} ${sanitize(f.name)}`).join('');
-  let args = type.attributes.filter(f => f.name !== 'type').map(f => `${isStatefulType(f.type) ? force(f.type, sanitize(f.name)) : `node.${f.name}`}`).join(', ');
-  content += `
+
+  if (fields.length === 0) {
+    content += `
+    @Override
+    @Nonnull
+    public Node reduce${typeName}(
+        @Nonnull ${typeName} node
+    ) {
+        enforceNoStrayStructuralLabels(node);
+        return applyReplacer(this.nodeToLabels.get(node), node);
+    }
+`;
+  } else {
+
+    let params = fields.map(f => `,\n        @Nonnull ${toJavaType(f.type, 'Supplier<Node>')} ${sanitize(f.name)}Thunk`).join('');
+
+    let newFields = fields.map(f => `        ${toJavaType(f.type)} ${sanitize(f.name)} = ${force(f.type, sanitize(f.name))};`).join('\n');
+    let equals = fields.map(makeEquals).join(' && ');
+    let args = type.attributes.filter(f => f.name !== 'type').map(f => `${isStatefulType(f.type) ? sanitize(f.name) : `node.${f.name}`}`).join(', ');
+
+    content += `
     @Override
     @Nonnull
     public Node reduce${typeName}(
         @Nonnull ${typeName} node${params}
     ) {
         enforceNoStrayStructuralLabels(node);
-        return applyReplacer(node, new ${typeName}(${args}));
+${newFields}
+        Node newNode = ${equals}
+          ? node
+          : new ${typeName}(${args});
+        return applyReplacer(this.nodeToLabels.get(node), newNode);
     }
 `;
+  }
 }
 
 content += `

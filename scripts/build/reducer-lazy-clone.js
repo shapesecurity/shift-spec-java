@@ -36,15 +36,15 @@ import com.shapesecurity.shift.es${year}.ast.*;
 import javax.annotation.Nonnull;
 
 public class LazyReconstructingReducer implements Reducer<Node> {
-    public static <T extends Node> boolean listRefEquals(ImmutableList<T> a, ImmutableList<Node> b) {
+    public static <A extends Node, B extends Node> boolean listRefEquals(ImmutableList<A> a, ImmutableList<B> b) {
         return a.length == b.length && !a.zipWith((l, r) -> l == r, b).exists(v -> !v); // I would prefer .every instead of !.exists(!), but we don't seem to have that
     }
 
-    public static <T extends Node> boolean maybeRefEquals(Maybe<T> a, Maybe<Node> b) {
+    public static <A extends Node, B extends Node> boolean maybeRefEquals(Maybe<A> a, Maybe<B> b) {
         return a.isJust() == b.isJust() && a.maybe(true, l -> l == b.fromJust());
     }
 
-    public static <T extends Node> boolean listMaybeRefEquals(ImmutableList<Maybe<T>> a, ImmutableList<Maybe<Node>> b) {
+    public static <A extends Node, B extends Node> boolean listMaybeRefEquals(ImmutableList<Maybe<A>> a, ImmutableList<Maybe<B>> b) {
         return a.length == b.length && !a.zipWith(LazyReconstructingReducer::maybeRefEquals, b).exists(v -> !v);
     }
 
