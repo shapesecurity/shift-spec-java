@@ -25,37 +25,51 @@ const reducerDir = 'reducer/';
 ensureDir(outDir + reducerDir);
 
 
-let reducerContent = `${makeHeader(__filename)}
+let flatternerContent = `${makeHeader(__filename)}
 
 package com.shapesecurity.shift.es${year}.reducer;
 
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
 import com.shapesecurity.shift.es${year}.ast.*;
-
 import javax.annotation.Nonnull;
 
-public interface Reducer<State> {`;
+public class Flattener extends MonoidalReducer<ImmutableList<Node>> {
+    private static final Flattener INSTANCE = new Flattener();
+
+    private Flattener() {
+        super(new com.shapesecurity.functional.data.Monoid.ImmutableListAppend<>());
+    }
+
+    @Nonnull
+    public static ImmutableList<Node> flatten(@Nonnull Program program) {
+        return Director.reduceProgram(INSTANCE, program);
+    }
+`;
 
 for (let typeName of Array.from(nodes.keys()).sort()) {
   let type = nodes.get(typeName);
   if (type.children.length !== 0) continue;
 
-  let attrs = type.attributes.filter(f => isStatefulType(f.type)).map(f => `            @Nonnull ${toJavaType(f.type, 'State')} ${sanitize(f.name)}`);
-  if (attrs.length === 0) {
-    reducerContent += `
+  let attrs = type.attributes.filter(f => isStatefulType(f.type));
+  let attrStrings = attrs.map(f => `, @Nonnull ${toJavaType(f.type, 'ImmutableList<Node>')} ${sanitize(f.name)}`);
+  flatternerContent += `
     @Nonnull
-    State reduce${typeName}(@Nonnull ${typeName} node`;
+    @Override
+    public ImmutableList<Node> reduce${typeName}(@Nonnull ${typeName} node${attrStrings.join('')}) {`;
+
+  if (attrStrings.length === 0) {
+    flatternerContent += `
+        return ImmutableList.<Node>of(node);`;
   } else {
-    reducerContent += `
-    @Nonnull
-    State reduce${typeName}(
-            @Nonnull ${typeName} node,
-${attrs.join(',\n')}`;
+    flatternerContent += `
+        return ImmutableList.<Node>of(node).append(super.reduce${typeName}(node${attrs.map(f => `, ${sanitize(f.name)}`).join('')}));`;
   }
-  reducerContent += ');\n';
+  flatternerContent += `
+    }
+`;
 }
 
-reducerContent += '}\n';
+flatternerContent += '}\n';
 
-fs.writeFileSync(outDir + reducerDir + 'Reducer.java', reducerContent, 'utf-8');
+fs.writeFileSync(outDir + reducerDir + 'Flattener.java', flatternerContent, 'utf-8');

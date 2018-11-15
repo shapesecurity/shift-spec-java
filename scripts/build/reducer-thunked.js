@@ -18,14 +18,14 @@
 
 let fs = require('fs');
 
-const { ensureDir, nodes, makeHeader, isStatefulType, sanitize, toJavaType, year } = require('../lib/utilities.js');
+const { ensureDir, nodes, makeHeader, isStatefulType, sanitize, year } = require('../lib/utilities.js');
 
 const outDir = 'out/';
 const reducerDir = 'reducer/';
 ensureDir(outDir + reducerDir);
 
 
-let reducerContent = `${makeHeader(__filename)}
+let thunkedReducerContent = `${makeHeader(__filename)}
 
 package com.shapesecurity.shift.es${year}.reducer;
 
@@ -34,28 +34,44 @@ import com.shapesecurity.functional.data.Maybe;
 import com.shapesecurity.shift.es${year}.ast.*;
 
 import javax.annotation.Nonnull;
+import java.util.function.Supplier;
 
-public interface Reducer<State> {`;
+public interface ThunkedReducer<State> {`;
+
+
+function thunkName(type) {
+  switch (type.kind) {
+    case 'nullable':
+      return `Maybe<${thunkName(type.argument)}>`;
+    case 'list':
+      return `ImmutableList<${thunkName(type.argument)}>`;
+    case 'namedType':
+    case 'union':
+      throw 'Not reached'; // eliminated by unions-to-interfaces
+    default:
+      return 'Supplier<State>';
+  }
+}
 
 for (let typeName of Array.from(nodes.keys()).sort()) {
   let type = nodes.get(typeName);
   if (type.children.length !== 0) continue;
 
-  let attrs = type.attributes.filter(f => isStatefulType(f.type)).map(f => `            @Nonnull ${toJavaType(f.type, 'State')} ${sanitize(f.name)}`);
+  let attrs = type.attributes.filter(f => isStatefulType(f.type)).map(f => `            @Nonnull ${thunkName(f.type)} ${sanitize(f.name)}`);
   if (attrs.length === 0) {
-    reducerContent += `
+    thunkedReducerContent += `
     @Nonnull
     State reduce${typeName}(@Nonnull ${typeName} node`;
   } else {
-    reducerContent += `
+    thunkedReducerContent += `
     @Nonnull
     State reduce${typeName}(
             @Nonnull ${typeName} node,
 ${attrs.join(',\n')}`;
   }
-  reducerContent += ');\n';
+  thunkedReducerContent += ');\n';
 }
 
-reducerContent += '}\n';
+thunkedReducerContent += '}\n';
 
-fs.writeFileSync(outDir + reducerDir + 'Reducer.java', reducerContent, 'utf-8');
+fs.writeFileSync(outDir + reducerDir + 'ThunkedReducer.java', thunkedReducerContent, 'utf-8');
