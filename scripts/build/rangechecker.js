@@ -27,7 +27,7 @@ ensureDir(outDir + rangeCheckerDir);
 
 let rangeCheckerContent = `${makeHeader(__filename)}
 
-package com.shapesecurity.shift.parser;
+package com.shapesecurity.shift.es${year}.parser;
 
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
