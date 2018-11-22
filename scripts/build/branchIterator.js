@@ -18,9 +18,11 @@
 
 let fs = require('fs');
 
-const { nodes, makeHeader, isStatefulType, sanitize, year } = require('../lib/utilities.js');
+const { ensureDir, nodes, makeHeader, isStatefulType, sanitize, year } = require('../lib/utilities.js');
 
 const outDir = 'out/';
+const pathDir = 'path/';
+ensureDir(outDir + pathDir);
 
 
 function cap(name) {
@@ -166,4 +168,4 @@ content += `${ifClauses.join(' else ')} else {
 }
 `;
 
-fs.writeFileSync(outDir + 'BranchIterator.java', content, 'utf-8');
+fs.writeFileSync(outDir + pathDir + 'BranchIterator.java', content, 'utf-8');

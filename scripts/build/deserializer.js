@@ -27,7 +27,7 @@ ensureDir(outDir + serializerDir);
 
 let deserializerContent = `${makeHeader(__filename)}
 
-package com.shapesecurity.shift.serialization;
+package com.shapesecurity.shift.es${year}.serialization;
 
 import com.google.gson.*;
 
@@ -49,10 +49,10 @@ public class Deserializer {
 
     public static Node deserialize(String toDeserialize) throws JSONException, IllegalAccessException, InstantiationException, ClassNotFoundException, NoSuchMethodException {
         JsonElement json = new JsonParser().parse(toDeserialize);
-        return deserializeNode(json);
+        return new Deserializer().deserializeNode(json);
     }
 
-    private static BinaryOperator deserializeBinaryOperator(JsonElement jsonElement) {
+    protected BinaryOperator deserializeBinaryOperator(JsonElement jsonElement) {
         String operatorString = jsonElement.getAsString();
         switch (operatorString) {
             case ",":
@@ -66,7 +66,7 @@ public class Deserializer {
             case "^":
                 return BinaryOperator.BitwiseXor;
             case "&":
-                return BinaryOperator.LogicalAnd;
+                return BinaryOperator.BitwiseAnd;
             case "+":
                 return BinaryOperator.Plus;
             case "-":
@@ -85,6 +85,8 @@ public class Deserializer {
                 return BinaryOperator.Div;
             case "%":
                 return BinaryOperator.Rem;
+            case "**":
+                return BinaryOperator.Exp;
             case "<":
                 return BinaryOperator.LessThan;
             case "<=":
@@ -104,11 +106,11 @@ public class Deserializer {
             case ">>>":
                 return BinaryOperator.UnsignedRight;
             default:
-                return null; // should not get here
+                throw new RuntimeException("unrecognized binary operator");
         }
     }
 
-    private static CompoundAssignmentOperator deserializeCompoundAssignmentOperator(JsonElement jsonElement) {
+    protected CompoundAssignmentOperator deserializeCompoundAssignmentOperator(JsonElement jsonElement) {
         String operatorString = jsonElement.getAsString();
         switch (operatorString) {
             case "+=":
@@ -121,6 +123,8 @@ public class Deserializer {
                 return CompoundAssignmentOperator.AssignDiv;
             case "%=":
                 return CompoundAssignmentOperator.AssignRem;
+            case "**=":
+                return CompoundAssignmentOperator.AssignExp;
             case "<<=":
                 return CompoundAssignmentOperator.AssignLeftShift;
             case ">>=":
@@ -134,11 +138,11 @@ public class Deserializer {
             case "&=":
                 return CompoundAssignmentOperator.AssignBitAnd;
             default:
-                return null; // should not get here
+                throw new RuntimeException("unrecognized compound assignment operator");
         }
     }
 
-    private static UnaryOperator deserializeUnaryOperator(JsonElement jsonElement) {
+    protected UnaryOperator deserializeUnaryOperator(JsonElement jsonElement) {
         String operatorString = jsonElement.getAsString();
         switch (operatorString) {
             case "+":
@@ -156,11 +160,11 @@ public class Deserializer {
             case "delete":
                 return UnaryOperator.Delete;
             default:
-                return null;
+                throw new RuntimeException("unrecognized unary operator");
         }
     }
 
-    private static UpdateOperator deserializeUpdateOperator(JsonElement jsonElement) {
+    protected UpdateOperator deserializeUpdateOperator(JsonElement jsonElement) {
         String operatorString = jsonElement.getAsString();
         switch (operatorString) {
             case "++":
@@ -168,11 +172,11 @@ public class Deserializer {
             case "--":
                 return UpdateOperator.Decrement;
             default:
-                return null;
+                throw new RuntimeException("unrecognized update operator");
         }
     }
 
-    private static VariableDeclarationKind deserializeVariableDeclarationKind(JsonElement jsonElement) {
+    protected VariableDeclarationKind deserializeVariableDeclarationKind(JsonElement jsonElement) {
         String kindString = jsonElement.getAsString();
         switch (kindString) {
             case "var":
@@ -182,13 +186,13 @@ public class Deserializer {
             case "let":
                 return VariableDeclarationKind.Let;
             default:
-                return null;
+                throw new RuntimeException("unrecognized variable declaration kind");
         }
     }
 `;
 
 let innerDeserializerContent = `
-    private static Node deserializeNode(JsonElement jsonElement) throws ClassNotFoundException, IllegalAccessException, InstantiationException, NoSuchMethodException {
+    protected Node deserializeNode(JsonElement jsonElement) throws ClassNotFoundException, IllegalAccessException, InstantiationException, NoSuchMethodException {
         if (jsonElement.isJsonObject()) {
             JsonObject jsonObject = jsonElement.getAsJsonObject();
             if (jsonObject.has("type")) {
@@ -209,17 +213,17 @@ function makeDeserializer(type) { // todo consider generics
           if (deserializers.has(name)) return name;
           base = type.argument.argument.argument;
           deserializers.set(name, `
-    private static ${toJavaType(type)} ${name}(JsonElement jsonElement) throws ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+    protected ${toJavaType(type)} ${name}(JsonElement jsonElement) throws ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         JsonArray jsonArray = jsonElement.getAsJsonArray();
         if (jsonArray.size() == 0) {
-          return ImmutableList.nil();
+          return ImmutableList.empty();
         } else {
             ArrayList<Maybe<${base}>> deserializedElements = new ArrayList<>();
             for (JsonElement ele : jsonArray) {
                 if (ele.isJsonNull()) {
-                    deserializedElements.add(Maybe.nothing());
+                    deserializedElements.add(Maybe.empty());
                 } else {
-                    deserializedElements.add(Maybe.just((${base}) deserializeNode(ele)));
+                    deserializedElements.add(Maybe.of((${base}) deserializeNode(ele)));
                 }
             }
             return ImmutableList.from(deserializedElements);
@@ -232,10 +236,10 @@ function makeDeserializer(type) { // todo consider generics
           if (deserializers.has(name)) return name;
           base = type.argument.argument;
           deserializers.set(name, `
-    private static ${toJavaType(type)} ${name}(JsonElement jsonElement) throws ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+    protected ${toJavaType(type)} ${name}(JsonElement jsonElement) throws ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         JsonArray jsonArray = jsonElement.getAsJsonArray();
         if (jsonArray.size() == 0) {
-          return ImmutableList.nil();
+          return ImmutableList.empty();
         } else {
             ArrayList<${base}> deserializedElements = new ArrayList<>();
             for (JsonElement ele : jsonArray) {
@@ -256,11 +260,11 @@ function makeDeserializer(type) { // todo consider generics
           if (deserializers.has(name)) return name;
           base = type.argument.argument;
           deserializers.set(name, `
-    private static ${toJavaType(type)} ${name}(JsonElement jsonElement) throws ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException {
+    protected ${toJavaType(type)} ${name}(JsonElement jsonElement) throws ClassNotFoundException, NoSuchMethodException, InstantiationException, IllegalAccessException {
         if (jsonElement.isJsonNull()) {
-            return Maybe.nothing();
+            return Maybe.empty();
         }
-        return Maybe.just((${base}) deserializeNode(jsonElement));
+        return Maybe.of((${base}) deserializeNode(jsonElement));
     }
 `);
           return name;
@@ -269,11 +273,11 @@ function makeDeserializer(type) { // todo consider generics
           name = `deserializeMaybe${base}`;
           if (deserializers.has(name)) return name;
           deserializers.set(name, `
-    private static ${toJavaType(type)} ${name}(JsonElement jsonElement) {
+    protected ${toJavaType(type)} ${name}(JsonElement jsonElement) {
         if (jsonElement.isJsonNull()) {
-            return Maybe.nothing();
+            return Maybe.empty();
         } else {
-            return Maybe.just(jsonElement.getAsString());
+            return Maybe.of(jsonElement.getAsString());
         }
     }
 `);
@@ -325,7 +329,7 @@ deserializerContent += `${Array.from(deserializers.values()).join('')}
 ${innerDeserializerContent}                }
             }
         }
-        return null;
+        throw new RuntimeException("node has no type or unrecognized type");
     }
 }`;
 

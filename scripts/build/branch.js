@@ -18,9 +18,11 @@
 
 let fs = require('fs');
 
-const { nodes, makeHeader, isStatefulType, sanitize, year } = require('../lib/utilities.js');
+const { ensureDir, nodes, makeHeader, isStatefulType, sanitize, year } = require('../lib/utilities.js');
 
 const outDir = 'out/';
+const pathDir = 'path/';
+ensureDir(outDir + pathDir);
 
 
 function cap(name) {
@@ -167,5 +169,4 @@ abstract class IndexedBranch extends Branch {
 ${classes.join('\n')}
 `;
 
-fs.writeFileSync(outDir + 'Branch.java', branchContent, 'utf-8');
-
+fs.writeFileSync(outDir + pathDir + 'Branch.java', branchContent, 'utf-8');

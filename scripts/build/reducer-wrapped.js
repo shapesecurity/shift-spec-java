@@ -20,56 +20,59 @@ let fs = require('fs');
 
 const { ensureDir, nodes, makeHeader, isStatefulType, sanitize, toJavaType, year } = require('../lib/utilities.js');
 
+
 const outDir = 'out/';
 const reducerDir = 'reducer/';
 ensureDir(outDir + reducerDir);
 
 
-let flatternerContent = `${makeHeader(__filename)}
+let content = `${makeHeader(__filename)}
 
 package com.shapesecurity.shift.es${year}.reducer;
 
+import com.shapesecurity.functional.F2;
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
 import com.shapesecurity.shift.es${year}.ast.*;
 import javax.annotation.Nonnull;
 
-public class Flattener extends MonoidalReducer<ImmutableList<Node>> {
-    private static final Flattener INSTANCE = new Flattener();
+public class WrappedReducer<T> implements Reducer<T> {
+  @Nonnull
+  private final F2<Node, T, T> wrap;
 
-    private Flattener() {
-        super(new com.shapesecurity.functional.data.Monoid.ImmutableListAppend<>());
-    }
+  @Nonnull
+  private final Reducer<T> reducer;
 
-    @Nonnull
-    public static ImmutableList<Node> flatten(@Nonnull Program program) {
-        return Director.reduceProgram(INSTANCE, program);
-    }
+  public WrappedReducer(@Nonnull F2<Node, T, T> wrap, @Nonnull Reducer<T> reducer) {
+    this.wrap = wrap;
+    this.reducer = reducer;
+  }
 `;
+
 
 for (let typeName of Array.from(nodes.keys()).sort()) {
   let type = nodes.get(typeName);
   if (type.children.length !== 0) continue;
 
   let attrs = type.attributes.filter(f => isStatefulType(f.type));
-  let attrStrings = attrs.map(f => `, @Nonnull ${toJavaType(f.type, 'ImmutableList<Node>')} ${sanitize(f.name)}`);
-  flatternerContent += `
+  let attrStrings = attrs.map(f => `@Nonnull ${toJavaType(f.type, 'T')} ${sanitize(f.name)}`);
+  if (attrStrings.length === 0) {
+    content += `
     @Nonnull
     @Override
-    public ImmutableList<Node> reduce${typeName}(@Nonnull ${typeName} node${attrStrings.join('')}) {`;
-
-  if (attrStrings.length === 0) {
-    flatternerContent += `
-        return ImmutableList.<Node>of(node);`;
+    public T reduce${typeName}(@Nonnull ${typeName} node`;
   } else {
-    flatternerContent += `
-        return ImmutableList.<Node>of(node).append(super.reduce${typeName}(node${attrs.map(f => `, ${sanitize(f.name)}`).join('')}));`;
+    content += `
+    @Nonnull
+    @Override
+    public T reduce${typeName}(@Nonnull ${typeName} node, ${attrStrings.join(', ')}`;
   }
-  flatternerContent += `
+  content += `) {
+        return wrap.apply(node, reducer.reduce${typeName}(node${attrs.map(f => ', ' + sanitize(f.name)).join('')}));
     }
 `;
 }
 
-flatternerContent += '}\n';
+content += '}\n';
 
-fs.writeFileSync(outDir + reducerDir + 'Flattener.java', flatternerContent, 'utf-8');
+fs.writeFileSync(outDir + reducerDir + 'WrappedReducer.java', content, 'utf-8');

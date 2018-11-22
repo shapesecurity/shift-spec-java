@@ -27,7 +27,7 @@ ensureDir(outDir + serializerDir);
 
 let serializerContent = `${makeHeader(__filename)}
 
-package com.shapesecurity.shift.serialization;
+package com.shapesecurity.shift.es${year}.serialization;
 
 import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
@@ -37,7 +37,7 @@ import com.shapesecurity.shift.es${year}.ast.operators.BinaryOperator;
 import com.shapesecurity.shift.es${year}.ast.operators.CompoundAssignmentOperator;
 import com.shapesecurity.shift.es${year}.ast.operators.UnaryOperator;
 import com.shapesecurity.shift.es${year}.ast.operators.UpdateOperator;
-import com.shapesecurity.shift.utils.Utils;
+import com.shapesecurity.shift.es${year}.utils.Utils;
 import com.shapesecurity.shift.es${year}.reducer.Director;
 import com.shapesecurity.shift.es${year}.reducer.Reducer;
 
@@ -67,7 +67,7 @@ public class Serializer implements Reducer<StringBuilder> {
         StringBuilder sb = new StringBuilder("[");
         NonEmptyImmutableList<StringBuilder> nel = (NonEmptyImmutableList<StringBuilder>) values;
         sb.append(nel.head);
-        nel.tail().foreach(s -> sb.append(",").append(s));
+        nel.tail().forEach(s -> sb.append(",").append(s));
         sb.append("]");
         return sb;
     }
@@ -84,91 +84,91 @@ public class Serializer implements Reducer<StringBuilder> {
         @Nonnull
         JsonObjectBuilder add(@Nonnull String property, boolean value) {
             optionalComma();
-            this.text.append(Utils.escapeStringLiteral(property)).append(":").append(value);
+            this.text.append(Utils.escapeStringLiteral(property, '"', false)).append(":").append(value);
             return this;
         }
 
         @Nonnull
         JsonObjectBuilder add(@Nonnull String property, @Nonnull String value) {
             optionalComma();
-            this.text.append(Utils.escapeStringLiteral(property)).append(":").append(Utils.escapeStringLiteral(value));
+            this.text.append(Utils.escapeStringLiteral(property, '"', false)).append(":").append(Utils.escapeStringLiteral(value, '"', false));
             return this;
         }
 
         @Nonnull
         JsonObjectBuilder add(@Nonnull String property, @Nonnull Number value) {
             optionalComma();
-            this.text.append(Utils.escapeStringLiteral(property)).append(":").append(value);
+            this.text.append(Utils.escapeStringLiteral(property, '"', false)).append(":").append(value);
             return this;
         }
 
         @Nonnull
         JsonObjectBuilder add(@Nonnull String property, @Nonnull BinaryOperator value) {
             optionalComma();
-            this.text.append(Utils.escapeStringLiteral(property)).append(":").append(Utils.escapeStringLiteral(value.getName()));
+            this.text.append(Utils.escapeStringLiteral(property, '"', false)).append(":").append(Utils.escapeStringLiteral(value.getName(), '"', false));
             return this;
         }
 
         @Nonnull
         JsonObjectBuilder add(@Nonnull String property, @Nonnull CompoundAssignmentOperator value) {
             optionalComma();
-            this.text.append(Utils.escapeStringLiteral(property)).append(":").append(Utils.escapeStringLiteral(value.getName()));
+            this.text.append(Utils.escapeStringLiteral(property, '"', false)).append(":").append(Utils.escapeStringLiteral(value.getName(), '"', false));
             return this;
         }
 
         @Nonnull
         JsonObjectBuilder add(@Nonnull String property, @Nonnull UnaryOperator value) {
             optionalComma();
-            this.text.append(Utils.escapeStringLiteral(property)).append(":").append(Utils.escapeStringLiteral(value.getName()));
+            this.text.append(Utils.escapeStringLiteral(property, '"', false)).append(":").append(Utils.escapeStringLiteral(value.getName(), '"', false));
             return this;
         }
 
         @Nonnull
         JsonObjectBuilder add(@Nonnull String property, @Nonnull UpdateOperator value) {
             optionalComma();
-            this.text.append(Utils.escapeStringLiteral(property)).append(":").append(Utils.escapeStringLiteral(value.getName()));
+            this.text.append(Utils.escapeStringLiteral(property, '"', false)).append(":").append(Utils.escapeStringLiteral(value.getName(), '"', false));
             return this;
         }
 
         @Nonnull
         JsonObjectBuilder add(@Nonnull String property, @Nonnull VariableDeclarationKind value) {
             optionalComma();
-            this.text.append(Utils.escapeStringLiteral(property)).append(":").append(Utils.escapeStringLiteral(value.name));
+            this.text.append(Utils.escapeStringLiteral(property, '"', false)).append(":").append(Utils.escapeStringLiteral(value.name, '"', false));
             return this;
         }
 
         @Nonnull
         JsonObjectBuilder add(@Nonnull String property, @Nonnull StringBuilder value) {
             optionalComma();
-            this.text.append(Utils.escapeStringLiteral(property)).append(":").append(value);
+            this.text.append(Utils.escapeStringLiteral(property, '"', false)).append(":").append(value);
             return this;
         }
 
         @Nonnull
         JsonObjectBuilder addMaybeString(@Nonnull String property, @Nonnull Maybe<String> value) {
             optionalComma();
-            this.text.append(Utils.escapeStringLiteral(property)).append(":").append(value.map(Utils::escapeStringLiteral).orJust("null"));
+            this.text.append(Utils.escapeStringLiteral(property, '"', false)).append(":").append(value.map(Utils::escapeStringLiteral).orJust("null"));
             return this;
         }
 
         @Nonnull
         JsonObjectBuilder add(@Nonnull String property, @Nonnull Maybe<StringBuilder> value) {
             optionalComma();
-            this.text.append(Utils.escapeStringLiteral(property)).append(":").append(o(value));
+            this.text.append(Utils.escapeStringLiteral(property, '"', false)).append(":").append(o(value));
             return this;
         }
 
         @Nonnull
         JsonObjectBuilder add(@Nonnull String property, @Nonnull ImmutableList<StringBuilder> value) {
             optionalComma();
-            this.text.append(Utils.escapeStringLiteral(property)).append(":").append(list(value));
+            this.text.append(Utils.escapeStringLiteral(property, '"', false)).append(":").append(list(value));
             return this;
         }
 
         @Nonnull
         JsonObjectBuilder addListMaybe(@Nonnull String property, @Nonnull ImmutableList<Maybe<StringBuilder>> value) { // because type erasure
             optionalComma();
-            this.text.append(Utils.escapeStringLiteral(property)).append(":").append(list(value.map(Serializer::o)));
+            this.text.append(Utils.escapeStringLiteral(property, '"', false)).append(":").append(list(value.map(Serializer::o)));
             return this;
         }
 
