@@ -20,8 +20,8 @@
   },
   "author": "",
   "dependencies": {
-    "shift-spec-idl": "2018.0.0",
-    "shift-spec": "2018.0.0"
+    "shift-spec-idl": "2018.0.1",
+    "shift-spec": "2018.0.2"
   },
   "devDependencies": {
     "eslint": "^5.8.0",
