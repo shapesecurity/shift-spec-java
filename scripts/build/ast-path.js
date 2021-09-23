@@ -90,7 +90,7 @@ for (let typeName of Array.from(nodes.keys()).sort()) {
     } else {
       classContent.push(`
   public static final ${name} ${name} = new ${name}();
-`)
+`);
     }
 
     let returnType = isListMaybe
