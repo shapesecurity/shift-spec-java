@@ -117,7 +117,7 @@ for (let typeName of Array.from(nodes.keys()).sort()) {
     }
 
     @Override
-    Maybe<${returnType}> apply(Object source) {
+    public Maybe<${returnType}> apply(Object source) {
       if (!(source instanceof ${typeName})) return Maybe.empty();
       return ((${typeName}) source).${sanitize(a.name)}.index(index).orJust(Maybe.empty());
     }
@@ -133,7 +133,7 @@ for (let typeName of Array.from(nodes.keys()).sort()) {
     }
 
     @Override
-    Maybe<${returnType}> apply(Object source) {
+    public Maybe<${returnType}> apply(Object source) {
       if (!(source instanceof ${typeName})) return Maybe.empty();
       return ((${typeName}) source).${sanitize(a.name)}.index(index);
     }
@@ -145,7 +145,7 @@ for (let typeName of Array.from(nodes.keys()).sort()) {
     } else if (isMaybe) {
       cl += `{
     @Override
-    Maybe<${returnType}> apply(Object source) {
+    public Maybe<${returnType}> apply(Object source) {
       if (!(source instanceof ${typeName})) return Maybe.empty();
       return ((${typeName}) source).${sanitize(a.name)};
     }
@@ -157,7 +157,7 @@ for (let typeName of Array.from(nodes.keys()).sort()) {
     } else {
       cl += `{
     @Override
-    Maybe<${returnType}> apply(Object source) {
+    public Maybe<${returnType}> apply(Object source) {
       if (!(source instanceof ${typeName})) return Maybe.empty();
       return Maybe.of(((${typeName}) source).${sanitize(a.name)});
     }
