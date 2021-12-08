@@ -6,7 +6,7 @@ let fs = require('fs');
 const { ensureDir, nodes, makeHeader, sanitize, year } = require('../lib/utilities.js');
 
 const outDir = 'out/';
-const pathDir = 'path/';
+const pathDir = 'astpath/';
 ensureDir(outDir + pathDir);
 
 
@@ -19,55 +19,30 @@ let branchContent = `${makeHeader(__filename)}
 package com.shapesecurity.shift.es${year}.astpath;
 
 
+import com.shapesecurity.functional.data.ImmutableList;
 import com.shapesecurity.functional.data.Maybe;
 import com.shapesecurity.shift.es${year}.ast.*;
 
 import java.util.Objects;
 
 
-public abstract class ASTPath<S, T> extends ObjectPath<S, T> {
+public abstract class ASTPath<S, T> implements ObjectPath<S, T> {
   private ASTPath() {}
 
   public abstract String propertyName();
 
-  private static abstract class TrivialPath<S, T> extends ObjectPath<S, T> {
-    public boolean equals(Object o) {
-      return this == o || o != null && getClass() == o.getClass();
-    }
-
-    public int hashCode() {
-      return Objects.hash(getClass());
-    }
+  public boolean equals(Object o) {
+    return this == o || o != null && getClass() == o.getClass();
   }
 
-  private static abstract class IndexedPath<S, T> extends ObjectPath<S, T> {
-    final int index;
-
-    protected IndexedPath(int index) {
-      this.index = index;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      IndexedPath<?, ?> that = (IndexedPath<?, ?>) o;
-      return index == that.index;
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(getClass(), index);
-    }
+  public int hashCode() {
+    return Objects.hash(getClass());
   }
 
 `;
 
 let classContent = [];
 let classes = [];
-
-// console.log(require('util').inspect(spec, { depth: Infinity }));
-// return;
 
 for (let typeName of Array.from(nodes.keys()).sort()) {
   let type = nodes.get(typeName);
@@ -81,17 +56,9 @@ for (let typeName of Array.from(nodes.keys()).sort()) {
     let isListMaybe = a.type.kind === 'list' && a.type.argument.kind === 'nullable';
 
     let name = `${typeName}_${cap(a.name)}`;
-    if (isList) {
-      classContent.push(`
-  public static ${name} ${name}(${isList ? 'int index' : ''}) {
-    return new ${name}(${isList ? 'index' : ''});
-  }
-`);
-    } else {
-      classContent.push(`
+    classContent.push(`
   public static final ${name} ${name} = new ${name}();
 `);
-    }
 
     let returnType = isListMaybe
       ? a.type.argument.argument.argument
@@ -107,55 +74,18 @@ for (let typeName of Array.from(nodes.keys()).sort()) {
       returnType = `com.shapesecurity.shift.es${year}.ast.operators.${returnType}`;
     }
 
-    let superClass = isListMaybe || isList ? 'IndexedPath' : 'TrivialPath';
-    let cl = `
-  public static class ${name} extends ASTPath.${superClass}<${typeName}, ${returnType}> `;
     if (isListMaybe) {
-      cl += `{
-  protected ${name}(int index) {
-      super(index);
-    }
-
-    @Override
-    public Maybe<${returnType}> apply(Object source) {
-      if (!(source instanceof ${typeName})) return Maybe.empty();
-      return ((${typeName}) source).${sanitize(a.name)}.index(index).orJust(Maybe.empty());
-    }
-
-    public String propertyName() {
-      return "${a.name}[" + index + "]";
-    }
-  }`;
+      returnType = `ImmutableList<Maybe<${returnType}>>`;
     } else if (isList) {
-      cl += `{
-    protected ${name}(int index) {
-      super(index);
-    }
-
-    @Override
-    public Maybe<${returnType}> apply(Object source) {
-      if (!(source instanceof ${typeName})) return Maybe.empty();
-      return ((${typeName}) source).${sanitize(a.name)}.index(index);
-    }
-
-    public String propertyName() {
-      return "${a.name}[" + index + "]";
-    }
-  }`;
+      returnType = `ImmutableList<${returnType}>`;
     } else if (isMaybe) {
-      cl += `{
-    @Override
-    public Maybe<${returnType}> apply(Object source) {
-      if (!(source instanceof ${typeName})) return Maybe.empty();
-      return ((${typeName}) source).${sanitize(a.name)};
+      returnType = `Maybe<${returnType}>`;
     }
 
-    public String propertyName() {
-      return "${a.name}";
-    }
-  }`;
-    } else {
-      cl += `{
+    let cl = `
+  public static class ${name} extends ASTPath<${typeName}, ${returnType}> {
+    private ${name}() {}
+
     @Override
     public Maybe<${returnType}> apply(Object source) {
       if (!(source instanceof ${typeName})) return Maybe.empty();
@@ -166,7 +96,6 @@ for (let typeName of Array.from(nodes.keys()).sort()) {
       return "${a.name}";
     }
   }`;
-    }
 
     classes.push(cl);
   });
